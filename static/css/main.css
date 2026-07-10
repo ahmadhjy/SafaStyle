@@ -576,7 +576,10 @@ body.nav-open .site-header .header-search input {
   position: relative;
   display: flex;
   flex-direction: column;
+  width: 100%;
+  max-width: 100%;
   min-height: min(92vh, 880px);
+  min-height: min(92dvh, 880px);
   overflow: hidden;
   background: #17111f;
   color: #fff;
@@ -585,17 +588,24 @@ body.nav-open .site-header .header-search input {
 .hero-stage {
   position: relative;
   flex: 1 1 auto;
-  min-height: 0;
+  width: 100%;
+  min-height: clamp(420px, 72vh, 820px);
+  min-height: clamp(420px, 72dvh, 820px);
   background: #17111f;
 }
 
-.hero-track,
-.hero-slide {
+.hero-track {
   position: absolute;
   inset: 0;
+  width: 100%;
+  height: 100%;
 }
 
 .hero-slide {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
   opacity: 0;
   visibility: hidden;
   transition: opacity 1s var(--ease), visibility 1s var(--ease);
@@ -611,11 +621,13 @@ body.nav-open .site-header .header-search input {
 
 .hero-media {
   position: absolute;
-  inset: -4%;
+  inset: 0;
+  width: 100%;
+  height: 100%;
   background-size: cover;
-  background-position: center 22%;
+  background-position: center center;
   background-repeat: no-repeat;
-  transform: scale(1.05);
+  transform: scale(1.02);
   will-change: transform;
 }
 
@@ -2066,7 +2078,7 @@ body.nav-open .site-header .header-search input {
     min-height: auto;
   }
   .hero-stage {
-    min-height: 58vh;
+    min-height: clamp(360px, 62dvh, 640px);
   }
   .page-home .hero-content {
     padding-top: calc(4.5rem + var(--header-h));
@@ -2121,6 +2133,10 @@ body.nav-open .site-header .header-search input {
 
   .hero-media {
     inset: 0;
+    width: 100%;
+    height: 100%;
+    background-size: cover;
+    background-position: center center;
     transform: none;
   }
 

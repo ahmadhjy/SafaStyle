@@ -1,6 +1,3 @@
-from pathlib import Path
-
-from django.conf import settings
 from django.db.models import Min, Prefetch, Q
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, render
@@ -9,69 +6,53 @@ from django.views.decorators.http import require_GET
 from .models import Category, Product, ProductImage, ProductVariation
 
 
-# Distinct hero backgrounds — filenames in media/library (not product primaries).
-HERO_SLIDE_FILES = (
-    ("ChatGPT-Image-Feb-14-2026-03_06_52-PM_bnqgroA.png", "Sets · New arrivals"),
-    ("ChatGPT-Image-Feb-14-2026-03_06_52-PM_u23FbVX.png", "Linen co-ords"),
-    ("IMG_1013-scaled.jpeg", "Dresses · Abayas"),
+# Hero slider — product slugs from demo catalog (images downloaded to media/).
+HERO_PRODUCT_SLUGS = (
+    "classy-linen-set",
+    "long-crepe-set",
+    "embroidered-abaya",
 )
 
 
-def _build_hero_slides(products, limit=3):
-    """Hero slides from explicit library files so banners never repeat."""
+def _build_hero_slides(products, request=None, limit=3):
+    """Hero slides from featured products with downloaded images."""
+    by_slug = {p.slug: p for p in products if p.primary_image is not None}
     slides = []
     seen_urls: set[str] = set()
-    library = Path(settings.MEDIA_ROOT) / "library"
 
-    for filename, eyebrow in HERO_SLIDE_FILES[:limit]:
-        path = library / filename
-        if not path.is_file():
-            continue
-        url = f"{settings.MEDIA_URL}library/{filename}"
-        if url in seen_urls:
-            continue
-        seen_urls.add(url)
-        slides.append(
-            {
-                "image_url": url,
-                "eyebrow": eyebrow,
-                "url": "",
-                "name": eyebrow,
-            }
-        )
+    def abs_url(url: str) -> str:
+        if not url:
+            return url
+        if url.startswith(("http://", "https://")):
+            return url
+        if request:
+            return request.build_absolute_uri(url)
+        return url
 
-    if len(slides) >= limit:
-        return slides[:limit]
-
-    # Fallback when library files are missing (e.g. fresh server before media upload).
-    by_slug = {p.slug: p for p in products if p.primary_image is not None}
-    curated_slugs = ["new-linen-set", "classy-linen-set", "embroidered-abaya"]
-    excluded_slugs = {"royal-gold-embroidered-abaya", "belted-wide-leg-pants"}
-
-    def add_slide(product):
+    def add_slide(product, eyebrow: str | None = None):
         img = product.primary_image
         if not img or not img.image:
             return
-        url = img.image.url
+        url = abs_url(img.image.url)
         if url in seen_urls:
             alt_img = product.images.exclude(pk=img.pk).order_by("sort_order").first()
             if alt_img and alt_img.image:
-                url = alt_img.image.url
+                url = abs_url(alt_img.image.url)
         if url in seen_urls:
             return
         seen_urls.add(url)
         cats = list(product.categories.all())
-        eyebrow = " · ".join(c.name for c in cats[:3]) or "New arrivals"
+        label = eyebrow or " · ".join(c.name for c in cats[:3]) or "New arrivals"
         slides.append(
             {
                 "image_url": url,
-                "eyebrow": eyebrow,
+                "eyebrow": label,
                 "url": product.get_absolute_url(),
                 "name": product.name,
             }
         )
 
-    for slug in curated_slugs:
+    for slug in HERO_PRODUCT_SLUGS:
         if len(slides) >= limit:
             break
         product = by_slug.get(slug)
@@ -80,7 +61,7 @@ def _build_hero_slides(products, limit=3):
 
     if len(slides) < limit:
         ranked = sorted(
-            [p for p in products if p.slug not in excluded_slugs and p.primary_image],
+            [p for p in products if p.primary_image],
             key=lambda p: (not p.is_featured, -p.created_at.timestamp()),
         )
         for product in ranked:
@@ -120,7 +101,7 @@ def home(request):
         .distinct()
     )
 
-    slides = _build_hero_slides(products)
+    slides = _build_hero_slides(products, request=request)
 
     sale_items = [p for p in products if p.has_sale][:4]
     latest = sorted(products, key=lambda p: p.created_at, reverse=True)[:8]
