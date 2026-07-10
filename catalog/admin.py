@@ -7,6 +7,8 @@ from django.urls import path, reverse
 from django.utils.html import format_html
 from django.utils.safestring import mark_safe
 
+from django.utils.text import slugify
+
 from .models import (
     Category,
     Color,
@@ -61,6 +63,24 @@ class ProductAdminForm(forms.ModelForm):
     class Meta:
         model = Product
         fields = "__all__"
+
+    def clean_name(self):
+        name = (self.cleaned_data.get("name") or "").strip()
+        if not name:
+            return name
+        norm = slugify(name)
+        if not norm:
+            return name
+        qs = Product.objects.all()
+        if self.instance.pk:
+            qs = qs.exclude(pk=self.instance.pk)
+        for product in qs.only("pk", "name", "slug"):
+            if slugify(product.name) == norm:
+                raise forms.ValidationError(
+                    f'A product already exists as “{product.name}”. '
+                    "Edit that product instead of creating a duplicate."
+                )
+        return name
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -177,7 +197,11 @@ class ProductAdmin(admin.ModelAdmin):
     readonly_fields = ("slug", "sku")
     filter_horizontal = ("categories", "available_colors", "available_sizes")
     inlines = [ProductVariationInline]
-    actions = ["generate_variations_action", "generate_variations_overwrite_prices"]
+    actions = [
+        "generate_variations_action",
+        "generate_variations_overwrite_prices",
+        "remove_empty_duplicates",
+    ]
     save_on_top = True
     fieldsets = (
         (
@@ -233,7 +257,11 @@ class ProductAdmin(admin.ModelAdmin):
 
     class Media:
         css = {"all": ("admin/css/gallery.css",)}
-        js = ("admin/js/gallery.js", "admin/js/variations.js")
+        js = (
+            "admin/js/gallery.js",
+            "admin/js/variations.js",
+            "admin/js/product-form.js",
+        )
 
     # -- custom media-library endpoints -------------------------------------
     def get_urls(self):
@@ -363,6 +391,28 @@ class ProductAdmin(admin.ModelAdmin):
     @admin.display(description="Vars")
     def variation_count(self, obj):
         return obj.variations.count()
+
+    @admin.action(description="Remove empty duplicates (0 variations, same name as another product)")
+    def remove_empty_duplicates(self, request, queryset):
+        removed = 0
+        for product in queryset:
+            if product.variations.exists():
+                continue
+            norm = slugify(product.name)
+            has_twin = any(
+                slugify(other.name) == norm and other.variations.exists()
+                for other in Product.objects.exclude(pk=product.pk).prefetch_related(
+                    "variations"
+                )
+            )
+            if has_twin:
+                product.delete()
+                removed += 1
+        self.message_user(
+            request,
+            f"Removed {removed} empty duplicate product(s).",
+            messages.SUCCESS if removed else messages.WARNING,
+        )
 
     @admin.action(description="Generate missing variations from colors × sizes")
     def generate_variations_action(self, request, queryset):
