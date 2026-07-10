@@ -396,20 +396,22 @@ body.nav-open .site-header .header-search input {
   position: absolute;
   top: 0;
   right: 0;
-  transform: translate(35%, -35%);
-  min-width: 16px;
-  height: 16px;
-  padding: 0 4px;
+  transform: translate(38%, -42%);
+  min-width: 18px;
+  padding: 0.22rem 0.5rem;
   border-radius: 999px;
-  background: var(--gold);
-  color: #111;
-  font-size: 0.58rem;
+  background: #111;
+  color: #fff;
+  font-size: 0.62rem;
   font-weight: 700;
-  line-height: 16px;
+  line-height: 1;
+  letter-spacing: 0.03em;
   text-align: center;
   pointer-events: none;
   border: 2px solid #fff;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.18);
+  box-shadow:
+    0 0 0 1px rgba(17, 17, 17, 0.08),
+    0 3px 10px rgba(0, 0, 0, 0.22);
   z-index: 1;
 }
 
@@ -2126,7 +2128,7 @@ body.nav-open .site-header .header-search input {
     display: none;
   }
   .cart-badge {
-    display: flex;
+    display: inline-flex;
     align-items: center;
     justify-content: center;
   }
