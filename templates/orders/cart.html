@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+
+{% block title %}Bag — {{ site.store_name }}{% endblock %}
+
+{% block content %}
+<div class="container" style="padding:2.5rem 0 4rem">
+  <h1 style="font-family:var(--font-display);font-size:2.8rem;margin:0 0 1.5rem">Your bag</h1>
+
+  {% if cart %}
+  <table class="cart-table">
+    <thead>
+      <tr>
+        <th>Product</th>
+        <th>Price</th>
+        <th>Qty</th>
+        <th>Total</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for item in cart %}
+      <tr>
+        <td>
+          <div class="cart-item">
+            {% if item.image %}
+              <img src="{{ item.image }}" alt="" width="72" height="96">
+            {% endif %}
+            <div>
+              <strong>{{ item.name }}</strong>
+              {% if item.label %}<div style="color:var(--muted);font-size:0.9rem">{{ item.label }}</div>{% endif %}
+            </div>
+          </div>
+        </td>
+        <td>${{ item.price }}</td>
+        <td>
+          <form method="post" action="{% url 'orders:cart_update' item.variation.id %}">
+            {% csrf_token %}
+            <input type="number" name="quantity" value="{{ item.qty }}" min="0" max="99" style="width:64px" onchange="this.form.submit()">
+          </form>
+        </td>
+        <td>${{ item.total }}</td>
+        <td>
+          <form method="post" action="{% url 'orders:cart_remove' item.variation.id %}">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-ghost" style="min-height:36px;padding:0.4rem 0.7rem">Remove</button>
+          </form>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-top:1.5rem;gap:1rem;flex-wrap:wrap">
+    <a class="btn btn-ghost" href="{% url 'catalog:shop' %}">Continue shopping</a>
+    <div style="text-align:right">
+      <div class="order-total" style="margin:0 0 1rem"><span>Subtotal</span><strong>${{ cart.subtotal }}</strong></div>
+      <a class="btn btn-gold" href="{% url 'orders:checkout' %}">Checkout</a>
+    </div>
+  </div>
+  {% else %}
+  <div class="empty-state">
+    <h1>Your bag is empty</h1>
+    <a class="btn btn-gold" href="{% url 'catalog:shop' %}">Browse shop</a>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,28 @@
+{% extends "accounts/_layout.html" %}
+
+{% block title %}My details — {{ site.store_name }}{% endblock %}
+{% block account_title %}Details &amp; address{% endblock %}
+
+{% block account_content %}
+<p style="color:var(--muted)">These details are used to pre-fill your checkout.</p>
+<form method="post" class="account-form">
+  {% csrf_token %}
+  {% if form.non_field_errors %}<div class="form-errors">{{ form.non_field_errors }}</div>{% endif %}
+  <div class="checkout-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem 1rem">
+    <div><label>First name</label>{{ form.first_name }}</div>
+    <div><label>Last name</label>{{ form.last_name }}</div>
+    <div style="grid-column:1/-1"><label>Email</label>{{ form.email }}</div>
+    <div><label>Phone</label>{{ form.phone }}</div>
+    <div><label>Company (optional)</label>{{ form.company }}</div>
+    <div style="grid-column:1/-1"><label>Street address</label>{{ form.street_address }}</div>
+    <div style="grid-column:1/-1"><label>Apartment, suite (optional)</label>{{ form.apartment }}</div>
+    <div><label>City</label>{{ form.city }}</div>
+    <div><label>Postcode (optional)</label>{{ form.postcode }}</div>
+    <div><label>Country</label>{{ form.country }}</div>
+  </div>
+  {% for field in form %}
+    {% if field.errors %}<div class="form-errors">{{ field.label }}: {{ field.errors|striptags }}</div>{% endif %}
+  {% endfor %}
+  <button type="submit" class="btn btn-gold" style="margin-top:1rem">Save details</button>
+</form>
+{% endblock %}

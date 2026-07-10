@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+
+{% block title %}Checkout — {{ site.store_name }}{% endblock %}
+
+{% block content %}
+<div class="container checkout-grid">
+  <div class="panel">
+    <h1>Billing details</h1>
+    <form method="post" novalidate>
+      {% csrf_token %}
+      <div class="form-grid">
+        <div class="field">
+          <label for="id_first_name">First name *</label>
+          {{ form.first_name }}
+        </div>
+        <div class="field">
+          <label for="id_last_name">Last name *</label>
+          {{ form.last_name }}
+        </div>
+        <div class="field full">
+          <label for="id_company">Company name (optional)</label>
+          {{ form.company }}
+        </div>
+        <div class="field full">
+          <label for="id_country">Country / Region *</label>
+          {{ form.country }}
+        </div>
+        <div class="field full">
+          <label for="id_street_address">Street address *</label>
+          {{ form.street_address }}
+        </div>
+        <div class="field full">
+          <label class="sr-only" for="id_apartment">Apartment</label>
+          {{ form.apartment }}
+        </div>
+        <div class="field full">
+          <label for="id_city">Town / City *</label>
+          {{ form.city }}
+        </div>
+        <div class="field full">
+          <label for="id_postcode">Postcode / ZIP (optional)</label>
+          {{ form.postcode }}
+        </div>
+        <div class="field full">
+          <label for="id_phone">Phone *</label>
+          {{ form.phone }}
+        </div>
+        <div class="field full">
+          <label for="id_email">Email address (optional)</label>
+          {{ form.email }}
+        </div>
+        <div class="field full">
+          <label for="id_order_notes">Additional information</label>
+          {{ form.order_notes }}
+        </div>
+      </div>
+      <div style="margin-top:1.5rem">
+        <button type="submit" class="btn btn-gold btn-block">Place order</button>
+      </div>
+    </form>
+  </div>
+
+  <aside class="order-box">
+    <h2>Your order</h2>
+    {% for item in cart %}
+      <div class="order-line">
+        <span>{{ item.name }}{% if item.label %} — {{ item.label }}{% endif %} × {{ item.qty }}</span>
+        <span>${{ item.total }}</span>
+      </div>
+    {% endfor %}
+    <div class="order-total">
+      <span>Total</span>
+      <strong>${{ cart.subtotal }}</strong>
+    </div>
+    <div class="payment-note">
+      <strong>Cash on delivery</strong><br>
+      Pay with cash upon delivery.
+    </div>
+    <p class="payment-note">
+      Your personal data will be used to process your order and for other purposes described in our
+      <a href="{% url 'pages:page' 'privacy-policy' %}" style="text-decoration:underline">privacy policy</a>.
+    </p>
+  </aside>
+</div>
+{% endblock %}

@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+
+{% block content %}
+<section class="section">
+  <div class="container account-wrap">
+    <div class="section-head">
+      <div>
+        <p class="eyebrow">My account</p>
+        <h1 style="font-family:var(--font-display);margin:0.2rem 0 0">{% block account_title %}Account{% endblock %}</h1>
+      </div>
+    </div>
+    <div class="account-grid">
+      <nav class="account-nav" aria-label="Account">
+        <a href="{% url 'accounts:dashboard' %}" class="{% if request.resolver_match.url_name == 'dashboard' %}is-active{% endif %}">Overview</a>
+        <a href="{% url 'accounts:orders' %}" class="{% if request.resolver_match.url_name == 'orders' or request.resolver_match.url_name == 'order_detail' %}is-active{% endif %}">Orders</a>
+        <a href="{% url 'accounts:details' %}" class="{% if request.resolver_match.url_name == 'details' %}is-active{% endif %}">Details &amp; address</a>
+        <a href="{% url 'accounts:password_change' %}" class="{% if 'password' in request.resolver_match.url_name %}is-active{% endif %}">Password</a>
+        <form method="post" action="{% url 'accounts:logout' %}" style="margin-top:0.5rem">
+          {% csrf_token %}
+          <button type="submit" class="btn btn-ghost" style="width:100%">Log out</button>
+        </form>
+      </nav>
+      <div class="account-body">
+        {% block account_content %}{% endblock %}
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}

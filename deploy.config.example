@@ -1,0 +1,6 @@
+# Copy to deploy.config and fill in your droplet details.
+# Used by deploy.ps1
+
+DROPLET_IP=209.38.211.102
+SSH_USER=root
+APP_DIR=/var/www/safastyle

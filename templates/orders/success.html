@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+
+{% block title %}Order {{ order.order_number }} — {{ site.store_name }}{% endblock %}
+
+{% block content %}
+<div class="container empty-state">
+  <p class="eyebrow">Thank you</p>
+  <h1>Order placed</h1>
+  <p>Your order <strong>{{ order.order_number }}</strong> is confirmed. We’ll contact you on {{ order.phone }}.</p>
+  <p style="color:var(--muted)">Total: ${{ order.total }} · Cash on delivery</p>
+  <a class="btn btn-gold" href="{% url 'catalog:shop' %}">Continue shopping</a>
+</div>
+{% endblock %}

@@ -1,0 +1,58 @@
+<div class="product-card reveal"
+     data-product-id="{{ product.id }}"
+     data-slug="{{ product.slug }}"
+     data-name="{{ product.name }}"
+     data-variable="{% if product.is_variable %}1{% else %}0{% endif %}">
+  <div class="product-media">
+    <a class="pc-link" href="{{ product.get_absolute_url }}" aria-label="{{ product.name }}">
+      {% with imgs=product.images.all %}
+        {% if imgs %}
+          <img class="pc-img pc-img--front" src="{{ imgs.0.image.url }}" alt="{{ product.name }}" loading="lazy" decoding="async" width="600" height="800">
+          {% if imgs|length > 1 %}
+            <img class="pc-img pc-img--back" src="{{ imgs.1.image.url }}" alt="" loading="lazy" decoding="async" width="600" height="800">
+          {% endif %}
+        {% else %}
+          <div class="pc-img pc-ph"></div>
+        {% endif %}
+      {% endwith %}
+    </a>
+    {% if product.has_sale %}<span class="badge">Sale</span>{% endif %}
+    <div class="pc-actions">
+      <button type="button" class="pc-action pc-quick" data-quick aria-label="Quick view — {{ product.name }}">
+        Quick view
+      </button>
+      <button type="button" class="pc-action pc-add" data-add aria-label="Add {{ product.name }} to bag">
+        <svg class="pc-bag-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M6 7h12l-1 12H7L6 7z"/><path d="M9 7a3 3 0 0 1 6 0"/></svg>
+        <span>Add to bag</span>
+      </button>
+    </div>
+  </div>
+  {% if product.is_variable %}
+    {% with swatches=product.card_color_swatches %}
+      {% if swatches %}
+        <div class="pc-color-slider" role="group" aria-label="Colors for {{ product.name }}">
+          <div class="pc-color-track">
+            {% for sw in swatches %}
+              <button type="button"
+                      class="pc-color-dot{% if forloop.first %} is-active{% endif %}"
+                      data-color-id="{{ sw.id }}"
+                      data-image="{{ sw.image }}"
+                      style="--swatch: {{ sw.hex }}"
+                      title="{{ sw.name }}"
+                      aria-label="{{ sw.name }}"></button>
+            {% endfor %}
+          </div>
+        </div>
+      {% endif %}
+    {% endwith %}
+  {% endif %}
+  <div class="product-info">
+    <h3><a href="{{ product.get_absolute_url }}">{{ product.name }}</a></h3>
+    <div class="price">
+      {% if product.has_sale and product.display_regular_price != product.display_price %}
+        <span class="was">${{ product.display_regular_price }}</span>
+      {% endif %}
+      <span class="now">${{ product.display_price }}</span>
+    </div>
+  </div>
+</div>

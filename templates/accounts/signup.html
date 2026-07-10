@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+
+{% block title %}Create account — {{ site.store_name }}{% endblock %}
+
+{% block content %}
+<div class="auth-card">
+  <h1>Create your account</h1>
+  <p class="auth-alt" style="margin-top:0">Save your details and track your orders.</p>
+  {% if form.non_field_errors %}
+    <div class="form-errors">{{ form.non_field_errors }}</div>
+  {% endif %}
+  <form method="post" action="{% url 'accounts:signup' %}{% if request.GET.next %}?next={{ request.GET.next|urlencode }}{% endif %}">
+    {% csrf_token %}
+    <label for="{{ form.first_name.id_for_label }}">First name</label>
+    {{ form.first_name }}
+    <label for="{{ form.last_name.id_for_label }}">Last name</label>
+    {{ form.last_name }}
+    <label for="{{ form.email.id_for_label }}">Email</label>
+    {{ form.email }}
+    <label for="{{ form.username.id_for_label }}">Username</label>
+    {{ form.username }}
+    <label for="{{ form.password1.id_for_label }}">Password</label>
+    {{ form.password1 }}
+    <label for="{{ form.password2.id_for_label }}">Confirm password</label>
+    {{ form.password2 }}
+    {% for field in form %}
+      {% if field.errors %}<div class="form-errors">{{ field.label }}: {{ field.errors|striptags }}</div>{% endif %}
+    {% endfor %}
+    <button type="submit" class="btn btn-gold btn-block" style="margin-top:0.75rem">Create account</button>
+  </form>
+  <p class="auth-alt">Already have an account? <a href="{% url 'accounts:login' %}">Sign in</a></p>
+</div>
+{% endblock %}

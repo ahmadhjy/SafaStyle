@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+
+{% block title %}Find us — {{ site.store_name }}{% endblock %}
+
+{% block content %}
+<div class="legal-hero">
+  <div class="container">
+    <p class="eyebrow">Location</p>
+    <h1 style="font-family:var(--font-display);font-size:clamp(2.4rem,5vw,3.8rem);margin:0.25rem 0 0">Find us</h1>
+  </div>
+</div>
+
+<div class="container">
+  <div class="checkout-grid" style="padding-top:0">
+    <div class="panel">
+      <h2>Safa Style Boutique</h2>
+      <p>{{ site.address }}</p>
+      <p><strong>Boutique:</strong> {{ site.phone_boutique }}</p>
+      <p><strong>Shoes:</strong> {{ site.phone_shoes }}</p>
+      <p><a href="mailto:{{ site.email }}">{{ site.email }}</a></p>
+      <p style="margin-top:1rem;color:var(--muted)">{{ site.about }}</p>
+      <div style="margin-top:1.5rem;display:flex;gap:0.75rem;flex-wrap:wrap">
+        <a class="btn btn-gold" href="https://wa.me/96181820915" target="_blank" rel="noopener">WhatsApp us</a>
+        <a class="btn btn-ghost" href="{% url 'pages:contact' %}">Contact form</a>
+      </div>
+    </div>
+
+    <div class="map-wrap">
+      <iframe
+        class="map-embed"
+        title="Safa Style Boutique location"
+        src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3313.3189843714363!2d35.48815118080662!3d33.85566925908298!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x151f19e273c67bed%3A0x5a96d57f0784384d!2sSAFA%20Style!5e0!3m2!1sen!2sus!4v1783614813469!5m2!1sen!2sus"
+        loading="lazy"
+        referrerpolicy="no-referrer-when-downgrade"
+        allowfullscreen></iframe>
+    </div>
+  </div>
+</div>
+{% endblock %}

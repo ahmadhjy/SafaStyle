@@ -1,0 +1,3 @@
+INFORMATION ABOUT US
+CONTACT US FOR ANY QUESTIONS
+You need to create a form using Contact form 7 plugin to be able to display it using this element.

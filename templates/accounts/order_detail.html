@@ -1,0 +1,41 @@
+{% extends "accounts/_layout.html" %}
+
+{% block title %}Order {{ order.order_number }} — {{ site.store_name }}{% endblock %}
+{% block account_title %}Order {{ order.order_number }}{% endblock %}
+
+{% block account_content %}
+<p style="color:var(--muted)">
+  Placed {{ order.created_at|date:"F j, Y" }} ·
+  <span class="status-chip">{{ order.get_status_display }}</span>
+</p>
+
+<table class="orders-table" style="margin-top:1rem">
+  <thead>
+    <tr><th>Item</th><th>Qty</th><th>Price</th><th>Total</th></tr>
+  </thead>
+  <tbody>
+    {% for item in order.items.all %}
+    <tr>
+      <td>{{ item.product_name }}{% if item.variation_label and item.variation_label != 'Default' %} <span style="color:var(--muted)">({{ item.variation_label }})</span>{% endif %}</td>
+      <td>{{ item.quantity }}</td>
+      <td>${{ item.unit_price }}</td>
+      <td>${{ item.line_total }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+  <tfoot>
+    <tr><th colspan="3" style="text-align:right">Total</th><th>${{ order.total }}</th></tr>
+  </tfoot>
+</table>
+
+<h2 style="font-family:var(--font-display);margin-top:2rem">Delivery</h2>
+<p style="color:var(--muted)">
+  {{ order.full_name }}<br>
+  {{ order.street_address }}{% if order.apartment %}, {{ order.apartment }}{% endif %}<br>
+  {{ order.city }} {{ order.postcode }}, {{ order.country }}<br>
+  {{ order.phone }}{% if order.email %} · {{ order.email }}{% endif %}
+</p>
+{% if order.order_notes %}<p><strong>Notes:</strong> {{ order.order_notes }}</p>{% endif %}
+
+<p style="margin-top:1.5rem"><a href="{% url 'accounts:orders' %}">← Back to orders</a></p>
+{% endblock %}

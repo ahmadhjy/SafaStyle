@@ -1,0 +1,43 @@
+{% extends "accounts/_layout.html" %}
+
+{% block title %}My account — {{ site.store_name }}{% endblock %}
+{% block account_title %}Hello, {{ user.first_name|default:user.username }}{% endblock %}
+
+{% block account_content %}
+<p style="color:var(--muted)">You have placed <strong>{{ order_count }}</strong> order{{ order_count|pluralize }}.</p>
+
+<h2 style="font-family:var(--font-display)">Recent orders</h2>
+{% if recent_orders %}
+<table class="orders-table">
+  <thead>
+    <tr><th>Order</th><th>Date</th><th>Status</th><th>Total</th><th></th></tr>
+  </thead>
+  <tbody>
+    {% for order in recent_orders %}
+    <tr>
+      <td>{{ order.order_number }}</td>
+      <td>{{ order.created_at|date:"M j, Y" }}</td>
+      <td><span class="status-chip">{{ order.get_status_display }}</span></td>
+      <td>${{ order.total }}</td>
+      <td><a href="{% url 'accounts:order_detail' order.order_number %}">View</a></td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+<p style="margin-top:1rem"><a href="{% url 'accounts:orders' %}">All orders →</a></p>
+{% else %}
+<p>You haven't placed any orders yet. <a href="{% url 'catalog:shop' %}">Start shopping →</a></p>
+{% endif %}
+
+<h2 style="font-family:var(--font-display);margin-top:2rem">Saved details</h2>
+<p style="color:var(--muted)">
+  {% if profile.street_address %}
+    {{ profile.street_address }}{% if profile.apartment %}, {{ profile.apartment }}{% endif %}<br>
+    {{ profile.city }} {{ profile.postcode }}, {{ profile.country }}<br>
+    {{ profile.phone }}
+  {% else %}
+    No saved address yet.
+  {% endif %}
+</p>
+<a class="btn btn-ghost" href="{% url 'accounts:details' %}">Edit details</a>
+{% endblock %}

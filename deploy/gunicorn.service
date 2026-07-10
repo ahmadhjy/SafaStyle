@@ -1,0 +1,21 @@
+[Unit]
+Description=Gunicorn — Safa Style Django
+After=network.target postgresql.service
+
+[Service]
+User=www-data
+Group=www-data
+WorkingDirectory=/var/www/safastyle
+EnvironmentFile=/var/www/safastyle/.env
+RuntimeDirectory=gunicorn
+ExecStart=/var/www/safastyle/venv/bin/gunicorn config.wsgi:application \
+    --bind unix:/run/gunicorn/safastyle.sock \
+    --workers 2 \
+    --timeout 60 \
+    --access-logfile - \
+    --error-logfile -
+Restart=always
+RestartSec=3
+
+[Install]
+WantedBy=multi-user.target

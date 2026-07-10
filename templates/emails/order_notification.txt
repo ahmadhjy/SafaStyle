@@ -1,0 +1,20 @@
+New order received — {{ order.order_number }}
+
+Customer
+  Name:  {{ order.full_name }}
+  Phone: {{ order.phone }}
+  Email: {{ order.email|default:"—" }}
+
+Delivery
+  {{ order.street_address }}{% if order.apartment %}, {{ order.apartment }}{% endif %}
+  {{ order.city }}{% if order.postcode %} {{ order.postcode }}{% endif %}, {{ order.country }}
+{% if order.order_notes %}
+Notes: {{ order.order_notes }}
+{% endif %}
+Items
+------------------------------------------------------------
+{% for item in items %}- {{ item.product_name }}{% if item.variation_label %} ({{ item.variation_label }}){% endif %}{% if item.sku %} [{{ item.sku }}]{% endif %} x {{ item.quantity }}  —  ${{ item.line_total }}
+{% endfor %}------------------------------------------------------------
+Subtotal: ${{ order.subtotal }}
+Total:    ${{ order.total }}
+Payment:  Cash on delivery

@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}{{ page.title }} — {{ site.store_name }}{% endblock %}
+
+{% block content %}
+<div class="legal-hero">
+  <div class="container">
+    <p class="eyebrow">Info</p>
+    <h1 style="font-family:var(--font-display);font-size:clamp(2.4rem,5vw,3.8rem);margin:0.25rem 0 0">{{ page.title }}</h1>
+  </div>
+</div>
+
+<div class="container">
+  <div class="legal">
+    <nav class="legal-toc" data-toc aria-label="On this page">
+      <strong>On this page</strong>
+    </nav>
+    <article class="legal-body" data-legal>
+      {{ page.content|safe }}
+    </article>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/legal.js' %}" defer></script>
+{% endblock %}

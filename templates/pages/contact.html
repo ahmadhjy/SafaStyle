@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+
+{% block title %}Contact — {{ site.store_name }}{% endblock %}
+
+{% block content %}
+<div class="container checkout-grid">
+  <div class="panel">
+    <h1>Contact us</h1>
+    {% if sent %}
+      <div class="flash">Thanks — we’ll get back to you soon.</div>
+    {% endif %}
+    {% if error %}
+      <div class="flash flash-error">{{ error }}</div>
+    {% endif %}
+    <form method="post">
+      {% csrf_token %}
+      <div class="form-grid">
+        <div class="field">
+          <label for="name">Name *</label>
+          <input class="field-input" id="name" name="name" value="{{ values.name }}" required>
+        </div>
+        <div class="field">
+          <label for="phone">Phone *</label>
+          <input class="field-input" id="phone" name="phone" value="{{ values.phone }}" required>
+        </div>
+        <div class="field full">
+          <label for="email">Email</label>
+          <input class="field-input" id="email" name="email" type="email" value="{{ values.email }}">
+        </div>
+        <div class="field full">
+          <label for="message">Message *</label>
+          <textarea class="field-input" id="message" name="message" rows="5" required>{{ values.message }}</textarea>
+        </div>
+      </div>
+      <div style="margin-top:1.25rem">
+        <button class="btn btn-gold" type="submit">Send message</button>
+      </div>
+    </form>
+  </div>
+  <aside class="order-box">
+    <h2>Visit &amp; call</h2>
+    <p>{{ site.address }}</p>
+    <p>Boutique: {{ site.phone_boutique }}</p>
+    <p>Shoes: {{ site.phone_shoes }}</p>
+    <p><a href="mailto:{{ site.email }}">{{ site.email }}</a></p>
+    {% if site.instagram_url %}
+      <p style="margin-top:1rem"><a href="{{ site.instagram_url }}" target="_blank" rel="noopener">{{ site.instagram_handle }}</a></p>
+    {% endif %}
+  </aside>
+</div>
+{% endblock %}

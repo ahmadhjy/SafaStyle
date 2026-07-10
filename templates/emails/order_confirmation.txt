@@ -1,0 +1,24 @@
+Hi {{ order.first_name }},
+
+Thank you for your order with {{ store_name }}! We've received it and our team
+will contact you shortly to confirm delivery.
+
+Order number: {{ order.order_number }}
+Payment: Cash on delivery
+
+Items
+------------------------------------------------------------
+{% for item in items %}- {{ item.product_name }}{% if item.variation_label %} ({{ item.variation_label }}){% endif %} x {{ item.quantity }}  —  ${{ item.line_total }}
+{% endfor %}------------------------------------------------------------
+Total: ${{ order.total }}
+
+Delivery to
+{{ order.full_name }}
+{{ order.street_address }}{% if order.apartment %}, {{ order.apartment }}{% endif %}
+{{ order.city }}{% if order.postcode %} {{ order.postcode }}{% endif %}, {{ order.country }}
+Phone: {{ order.phone }}
+{% if order.order_notes %}
+Notes: {{ order.order_notes }}
+{% endif %}
+With love,
+{{ store_name }}

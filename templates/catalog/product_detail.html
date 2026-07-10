@@ -1,0 +1,139 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}{{ product.name }} — {{ site.store_name }}{% endblock %}
+{% block og_title %}{{ product.name }} — {{ site.store_name }}{% endblock %}
+{% block meta_description %}{{ product.short_description|default:product.description|truncatechars:150 }}{% endblock %}
+{% block og_type %}product{% endblock %}
+{% block og_image %}{% if product.primary_image %}<meta property="og:image" content="{{ request.scheme }}://{{ request.get_host }}{{ product.primary_image.image.url }}">{% endif %}{% endblock %}
+
+{% block extra_head %}
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Product",
+  "name": "{{ product.name|escapejs }}",
+  "description": "{{ product.short_description|default:product.description|truncatechars:200|escapejs }}",
+  "image": "{% if product.primary_image %}{{ request.scheme }}://{{ request.get_host }}{{ product.primary_image.image.url }}{% endif %}",
+  "sku": "{{ product.sku }}",
+  "offers": {
+    "@type": "Offer",
+    "priceCurrency": "USD",
+    "price": "{{ product.display_price }}",
+    "availability": "https://schema.org/InStock"
+  }
+}
+</script>
+{% endblock %}
+
+{% block content %}
+{% if is_preview %}
+<div class="preview-ribbon">
+  <span>Preview mode — this product is hidden from shoppers.</span>
+  {% if user.is_staff %}<a href="/admin/catalog/product/{{ product.id }}/change/">Edit in admin</a>{% endif %}
+</div>
+{% endif %}
+<div class="container pdp" data-product-page data-product-id="{{ product.id }}">
+  <div class="gallery">
+    <div class="gallery-main">
+      {% with img=product.primary_image %}
+        <img id="gallery-main-img"
+             src="{% if img %}{{ img.image.url }}{% else %}{% static 'img/hero-fallback.svg' %}{% endif %}"
+             alt="{{ product.name }}"
+             width="800" height="1066">
+      {% endwith %}
+    </div>
+    <div class="gallery-thumbs" id="gallery-thumbs"></div>
+  </div>
+
+  <div class="pdp-info">
+    <p class="eyebrow">
+      {% for cat in product.categories.all %}{{ cat.name }}{% if not forloop.last %} · {% endif %}{% endfor %}
+    </p>
+    <h1>{{ product.name }}</h1>
+    <div class="pdp-price price" id="pdp-price">
+      <span class="now" id="price-now">${{ product.display_price }}</span>
+      <span class="was" id="price-was" hidden></span>
+    </div>
+    {% if product.short_description %}
+      <p class="pdp-short">{{ product.short_description }}</p>
+    {% endif %}
+
+    <form method="post" action="" id="add-form">
+      {% csrf_token %}
+      <input type="hidden" name="next" value="{{ request.path }}">
+
+      {% if product.available_colors.exists %}
+      <fieldset class="option-block">
+        <legend>Color <span id="color-label"></span></legend>
+        <div class="swatches" id="color-swatches">
+          {% for color in product.available_colors.all %}
+            <button type="button"
+                    class="swatch"
+                    data-color-id="{{ color.id }}"
+                    title="{{ color.name }}"
+                    style="background: {{ color.hex_code|default:'#ccc' }}"
+                    aria-label="{{ color.name }}"></button>
+          {% endfor %}
+        </div>
+      </fieldset>
+      {% endif %}
+
+      {% if product.available_sizes.exists %}
+      <fieldset class="option-block">
+        <legend>Size</legend>
+        <div class="size-pills" id="size-pills">
+          {% for size in product.available_sizes.all %}
+            <button type="button" class="size-pill" data-size-id="{{ size.id }}">{{ size.name }}</button>
+          {% endfor %}
+        </div>
+      </fieldset>
+      {% endif %}
+
+      <p class="stock-note" id="stock-note">Select options</p>
+
+      <div class="qty-row">
+        <label class="sr-only" for="quantity">Quantity</label>
+        <input type="number" id="quantity" name="quantity" value="1" min="1" max="99">
+      </div>
+
+      <button type="submit" class="btn btn-gold btn-block" id="add-btn" disabled>Add to bag</button>
+    </form>
+
+    {% if product.measurements %}
+      <div class="measurements">{{ product.measurements }}</div>
+    {% endif %}
+
+    {% if product.description %}
+      <div class="prose" style="padding:1.5rem 0 0;margin-top:1.5rem;border-top:1px solid var(--line)">
+        <h2 style="margin-top:0">Description</h2>
+        <p>{{ product.description|linebreaksbr }}</p>
+      </div>
+    {% endif %}
+  </div>
+</div>
+
+{% if related %}
+<section class="section" style="padding-top:0">
+  <div class="container">
+    <div class="section-head">
+      <div>
+        <p class="eyebrow">More</p>
+        <h2>Related products</h2>
+      </div>
+    </div>
+    <div class="product-grid">
+      {% for product in related %}
+        {% include "catalog/partials/product_card.html" %}
+      {% endfor %}
+    </div>
+  </div>
+</section>
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+{{ variations_json|json_script:"variations-data" }}
+{{ images_by_color|json_script:"images-data" }}
+<script src="{% static 'js/product.js' %}" defer></script>
+{% endblock %}
