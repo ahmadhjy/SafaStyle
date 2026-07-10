@@ -182,21 +182,23 @@ class Command(BaseCommand):
             )
 
         cats = [
-            "Sets",
-            "Tops",
-            "Dresses",
-            "Pants",
-            "Shoes",
-            "Coats",
-            "Jackets",
-            "Basics",
+            "Accessories",
             "Bags",
+            "Basics",
+            "Cardigans",
+            "Coats",
+            "Dresses",
+            "Jackets",
+            "Pants",
+            "Ramadan Specials",
             "Scarfs",
+            "Sets",
             "Shawls",
+            "Shoes",
+            "Skirts",
             "Socks",
-            "Skirt Set",
+            "Tops",
             "Vests",
-            "Pants Set",
         ]
         for i, name in enumerate(cats):
             Category.objects.update_or_create(
