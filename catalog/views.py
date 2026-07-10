@@ -12,7 +12,10 @@ HERO_BANNER_SLIDES = (
         "image": "img/banners/banner1.png",
         "width": 1942,
         "height": 809,
-        "eyebrow": "Ramadan Specials · Sets · Pants Set",
+        "eyebrow": "New Arrivals · Bags",
+        "title": "Modest. Modern.",
+        "title_em": "Made for you.",
+        "lead": "Statement bags and modest looks — new pieces every week.",
         "object_position": "center center",
     },
     {
@@ -20,20 +23,48 @@ HERO_BANNER_SLIDES = (
         "width": 1973,
         "height": 797,
         "eyebrow": "New Arrivals · Dresses",
-        "object_position": "62% center",
+        "title": "Tailored for",
+        "title_em": "every occasion.",
+        "lead": "Quality fabrics and flattering cuts, ready to wear.",
+        "object_position": "center center",
     },
     {
         "image": "img/banners/banner3.png",
         "width": 1973,
         "height": 797,
         "eyebrow": "Modest Fashion · Abayas",
+        "title": "Elegant.",
+        "title_em": "Effortless.",
+        "lead": "Classic abayas with modern details you'll love.",
         "object_position": "center center",
     },
+)
+
+HOME_FEATURE_CARDS = (
+    {"slug": "sets", "image": "img/featured/featured1.png"},
+    {"slug": "bags", "image": "img/featured/featured2.png"},
 )
 
 
 def hero_slides():
     return HERO_BANNER_SLIDES
+
+
+def home_feature_cards(categories):
+    by_slug = {c.slug: c for c in categories}
+    cards = []
+    for item in HOME_FEATURE_CARDS:
+        cat = by_slug.get(item["slug"])
+        if not cat:
+            continue
+        cards.append(
+            {
+                "name": cat.name,
+                "url": cat.get_absolute_url(),
+                "image": item["image"],
+            }
+        )
+    return cards
 
 
 def _category_image_map():
@@ -77,20 +108,15 @@ def home(request):
     for cat in featured_categories:
         cat.rep_image = (cat.image.url if cat.image else None) or cat_img.get(cat.id)
 
-    # Editorial banners: Sets + Dresses with distinct category images
-    editorial_slugs = ("sets", "dresses")
-    feature_categories = [
-        c for c in featured_categories if c.slug in editorial_slugs and getattr(c, "rep_image", None)
-    ][:2]
-    if len(feature_categories) < 2:
-        feature_categories = [c for c in featured_categories if getattr(c, "rep_image", None)][:2]
+    # Editorial feature boxes: Sets + Bags with dedicated artwork.
+    feature_cards = home_feature_cards(featured_categories)
 
     return render(
         request,
         "catalog/home.html",
         {
             "slides": slides,
-            "feature_categories": feature_categories,
+            "feature_cards": feature_cards,
             "sale_items": sale_items,
             "latest": latest,
             "featured_categories": featured_categories,

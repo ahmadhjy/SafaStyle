@@ -29,7 +29,7 @@
   <a class="skip-link" href="#main">Skip to content</a>
   <span id="csrf-token" data-token="{{ csrf_token }}" hidden></span>
 
-  <header class="site-header{% if request.resolver_match.url_name == 'home' %} site-header--hero{% endif %}" id="top">
+  <header class="site-header" id="top">
     <div class="header-inner">
       <a class="brand" href="{% url 'catalog:home' %}" aria-label="{{ site.store_name }} home">
         {% include "partials/logo.html" %}
