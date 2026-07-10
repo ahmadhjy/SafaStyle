@@ -433,6 +433,14 @@ body.nav-open .site-header .header-search input {
   white-space: nowrap;
 }
 
+.cart-btn {
+  position: relative;
+}
+
+.cart-count-badge {
+  display: none;
+}
+
 .menu-toggle {
   display: none;
   width: 40px;
@@ -2053,6 +2061,29 @@ body.nav-open .site-header .header-search input {
     display: none;
   }
   .cart-meta {
+    display: none;
+  }
+  .cart-count-badge {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: absolute;
+    top: -3px;
+    right: -7px;
+    min-width: 1.05rem;
+    height: 1.05rem;
+    padding: 0 0.28rem;
+    border-radius: 999px;
+    background: var(--ink);
+    color: #fff;
+    font-size: 0.62rem;
+    font-weight: 600;
+    line-height: 1;
+    letter-spacing: 0;
+    text-shadow: none;
+    pointer-events: none;
+  }
+  .cart-count-badge.is-empty {
     display: none;
   }
   .footer-grid {

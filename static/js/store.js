@@ -37,6 +37,18 @@
   function updateCartMeta(count, total) {
     const meta = document.getElementById("cart-meta");
     if (meta) meta.textContent = `${count} / $${Number(total).toFixed(2)}`;
+    const badge = document.getElementById("cart-count-badge");
+    if (badge) {
+      badge.textContent = count;
+      badge.classList.toggle("is-empty", !count);
+    }
+    const cartBtn = document.querySelector(".cart-btn");
+    if (cartBtn) {
+      cartBtn.setAttribute(
+        "aria-label",
+        count ? `Bag, ${count} item${count === 1 ? "" : "s"}` : "Bag"
+      );
+    }
   }
 
   // --- Add to bag (AJAX) ---------------------------------------------------

@@ -74,11 +74,12 @@
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 4-6 8-6s8 2 8 6"/></svg>
           </a>
         {% endif %}
-        <a class="icon-btn cart-btn" href="{% url 'orders:cart' %}" aria-label="Bag">
+        <a class="icon-btn cart-btn" href="{% url 'orders:cart' %}" aria-label="{% if cart_count %}Bag, {{ cart_count }} item{{ cart_count|pluralize }}{% else %}Bag{% endif %}">
           <svg class="bag-icon" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
             <path d="M8 10V8a4 4 0 0 1 8 0v2"/>
             <path d="M5 10h14a1 1 0 0 1 1 1.1l-1.1 10a1 1 0 0 1-1 .9H6.1a1 1 0 0 1-1-.9L4 11.1A1 1 0 0 1 5 10z"/>
           </svg>
+          <span class="cart-count-badge{% if not cart_count %} is-empty{% endif %}" id="cart-count-badge" aria-hidden="true">{{ cart_count }}</span>
           <span class="cart-meta" id="cart-meta">{{ cart_count }} / ${{ cart_total|floatformat:2 }}</span>
         </a>
         <button type="button" class="icon-btn menu-toggle" aria-label="Menu" data-menu-toggle>
