@@ -71,5 +71,5 @@ if ($Push) {
 }
 
 Write-Host "Deploying latest main branch..." -ForegroundColor Cyan
-ssh @sshArgs $target "cd /var/www/safastyle && bash deploy/deploy.sh"
+ssh @sshArgs $target 'cd /var/www/safastyle && bash deploy/deploy.sh'
 exit $LASTEXITCODE
