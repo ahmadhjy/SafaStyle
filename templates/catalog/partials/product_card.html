@@ -38,24 +38,6 @@
       </button>
     </div>
   </div>
-  {% if product.is_variable %}
-      {% if swatches %}
-        <div class="pc-color-slider" role="group" aria-label="Colors for {{ product.name }}">
-          <div class="pc-color-track">
-            {% for sw in swatches %}
-              <button type="button"
-                      class="pc-color-dot{% if forloop.first %} is-active{% endif %}"
-                      data-color-id="{{ sw.id }}"
-                      data-image="{{ sw.image }}"
-                      style="--swatch: {{ sw.hex }}"
-                      title="{{ sw.name }}"
-                      aria-label="{{ sw.name }}"
-                      aria-pressed="{% if forloop.first %}true{% else %}false{% endif %}"></button>
-            {% endfor %}
-          </div>
-        </div>
-      {% endif %}
-  {% endif %}
   {% endwith %}
   <div class="product-info">
     <h3><a href="{{ product.get_absolute_url }}">{{ product.name }}</a></h3>
