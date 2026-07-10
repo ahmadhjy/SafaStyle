@@ -1,17 +1,20 @@
+from django.conf import settings
+
 from catalog.models import Category
 
 from .models import SiteSetting
 
 
 def site_globals(request):
-    settings = SiteSetting.load()
+    settings_obj = SiteSetting.load()
     cart = request.session.get("cart", {})
     cart_count = sum(int(i.get("qty", 0)) for i in cart.values())
     cart_total = sum(
         float(i.get("price", 0)) * int(i.get("qty", 0)) for i in cart.values()
     )
     return {
-        "site": settings,
+        "site": settings_obj,
+        "static_version": settings.STATIC_CACHE_VERSION,
         "nav_categories": Category.objects.filter(
             is_active=True, parent__isnull=True, products__is_active=True
         )

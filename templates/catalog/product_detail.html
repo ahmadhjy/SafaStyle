@@ -154,5 +154,5 @@
 {% block extra_js %}
 {{ variations_json|json_script:"variations-data" }}
 {{ images_by_color|json_script:"images-data" }}
-<script src="{% static 'js/product.js' %}" defer></script>
+<script src="{% static 'js/product.js' %}?v={{ static_version }}" defer></script>
 {% endblock %}
