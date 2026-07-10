@@ -437,8 +437,22 @@ body.nav-open .site-header .header-search input {
   position: relative;
 }
 
-.cart-count-badge {
+.cart-badge {
   display: none;
+  position: absolute;
+  top: 2px;
+  right: 0;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 999px;
+  background: var(--gold);
+  color: #111;
+  font-size: 0.65rem;
+  font-weight: 700;
+  line-height: 18px;
+  text-align: center;
+  pointer-events: none;
 }
 
 .menu-toggle {
@@ -633,22 +647,22 @@ body.nav-open .site-header .header-search input {
   width: 100%;
   height: 100%;
   background-size: cover;
-  background-position: center top;
+  background-position: center center;
   background-repeat: no-repeat;
-  transform: scale(1);
+  transform: scale(1.02);
   will-change: transform;
 }
 
 .hero-slide.is-active .hero-media {
-  animation: heroKen 10s var(--ease) forwards;
+  animation: kenBurns 7s var(--ease) forwards;
 }
 
-@keyframes heroKen {
+@keyframes kenBurns {
   from {
-    transform: scale(1.04);
+    transform: scale(1.12);
   }
   to {
-    transform: scale(1);
+    transform: scale(1.02);
   }
 }
 
@@ -673,7 +687,7 @@ body.nav-open .site-header .header-search input {
   max-width: 1280px;
   width: 100%;
   margin: 0 auto;
-  padding: 6rem 1.25rem 6rem;
+  padding: 6rem 1.25rem 5.5rem;
 }
 
 .hero-brand {
@@ -755,7 +769,7 @@ body.nav-open .site-header .header-search input {
 
 .hero-dots {
   position: absolute;
-  bottom: 2rem;
+  bottom: 2.25rem;
   left: 50%;
   transform: translateX(-50%);
   z-index: 3;
@@ -1390,25 +1404,25 @@ body.nav-open .site-header .header-search input {
 .gallery-main {
   position: relative;
   width: 100%;
-  min-height: 420px;
-  max-height: min(88vh, 920px);
   aspect-ratio: 3 / 4;
+  max-height: min(88vh, 920px);
   background: transparent;
   border: 0;
   overflow: hidden;
   cursor: zoom-in;
-  display: flex;
-  align-items: center;
-  justify-content: center;
 }
 
 .gallery-main img {
   display: block;
   width: 100%;
   height: 100%;
-  object-fit: contain;
-  object-position: center top;
-  transition: opacity 0.35s ease;
+  object-fit: cover;
+  object-position: center center;
+  transition: opacity 0.35s ease, transform 0.4s var(--ease);
+}
+
+.gallery-main:hover img {
+  transform: scale(1.02);
 }
 
 .gallery-zoom-btn {
@@ -2063,28 +2077,12 @@ body.nav-open .site-header .header-search input {
   .cart-meta {
     display: none;
   }
-  .cart-count-badge {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    position: absolute;
-    top: -3px;
-    right: -7px;
-    min-width: 1.05rem;
-    height: 1.05rem;
-    padding: 0 0.28rem;
-    border-radius: 999px;
-    background: var(--ink);
-    color: #fff;
-    font-size: 0.62rem;
-    font-weight: 600;
-    line-height: 1;
-    letter-spacing: 0;
-    text-shadow: none;
-    pointer-events: none;
+  .cart-badge {
+    display: block;
   }
-  .cart-count-badge.is-empty {
-    display: none;
+  .page-home .site-header--hero:not(.is-scrolled) .cart-badge {
+    background: var(--gold);
+    color: #111;
   }
   .footer-grid {
     gap: 2.25rem;
@@ -2113,7 +2111,7 @@ body.nav-open .site-header .header-search input {
   }
   .page-home .hero-content {
     padding-top: calc(4.5rem + var(--header-h));
-    padding-bottom: 3.75rem;
+    padding-bottom: 4rem;
   }
   .hero-brand {
     font-size: clamp(2rem, 11vw, 3rem);
@@ -2167,7 +2165,7 @@ body.nav-open .site-header .header-search input {
     width: 100%;
     height: 100%;
     background-size: cover;
-    background-position: center top;
+    background-position: center center;
     transform: none;
   }
 

@@ -37,17 +37,11 @@
   function updateCartMeta(count, total) {
     const meta = document.getElementById("cart-meta");
     if (meta) meta.textContent = `${count} / $${Number(total).toFixed(2)}`;
-    const badge = document.getElementById("cart-count-badge");
-    if (badge) {
-      badge.textContent = count;
-      badge.classList.toggle("is-empty", !count);
-    }
+    const badge = document.getElementById("cart-badge");
+    if (badge) badge.textContent = String(count);
     const cartBtn = document.querySelector(".cart-btn");
     if (cartBtn) {
-      cartBtn.setAttribute(
-        "aria-label",
-        count ? `Bag, ${count} item${count === 1 ? "" : "s"}` : "Bag"
-      );
+      cartBtn.setAttribute("aria-label", `Bag, ${count} item${count === 1 ? "" : "s"}`);
     }
   }
 
@@ -342,13 +336,7 @@
     }
     front.src = url;
     front.alt = alt || card.dataset.name || "";
-    if (back) {
-      if (back.src === url) {
-        back.removeAttribute("src");
-      } else {
-        back.style.opacity = "0";
-      }
-    }
+    if (back && back.src === url) back.removeAttribute("src");
   }
 
   document.addEventListener("click", (e) => {

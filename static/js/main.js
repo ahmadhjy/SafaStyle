@@ -66,7 +66,7 @@ document.addEventListener("DOMContentLoaded", () => {
     requestAnimationFrame(() => el.classList.add("is-visible"));
   });
 
-  // Hero parallax — subtle only; avoid cropping the model
+  // Hero parallax
   const heroMedia = document.querySelector(".hero-media");
   if (heroMedia) {
     window.addEventListener(
@@ -74,7 +74,7 @@ document.addEventListener("DOMContentLoaded", () => {
       () => {
         const y = window.scrollY;
         if (y < window.innerHeight) {
-          heroMedia.style.transform = `translateY(${y * 0.08}px)`;
+          heroMedia.style.transform = `scale(1.08) translateY(${y * 0.18}px)`;
         }
       },
       { passive: true }
