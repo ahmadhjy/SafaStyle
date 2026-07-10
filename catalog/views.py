@@ -90,6 +90,7 @@ def _home_categories():
     for i, cat in enumerate(cats):
         cat.icon_static = icon_static_path(cat.slug)
         cat.tile_accent = accent_for_slug(cat.slug, i)
+        cat.use_icon = not bool(cat.image)
     return cats
 
 

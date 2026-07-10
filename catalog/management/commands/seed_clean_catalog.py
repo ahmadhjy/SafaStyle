@@ -249,8 +249,7 @@ class Command(BaseCommand):
             if skip_images:
                 continue
             if category.image:
-                category.image.delete(save=False)
-                category.save(update_fields=["image"])
+                continue
 
         if not skip_images:
             slugs = [slug for _, slug in CATEGORY_DEFS]

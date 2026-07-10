@@ -170,10 +170,14 @@
     </div>
     <div class="category-rail reveal-group">
       {% for cat in home_categories %}
-        <a class="category-tile category-tile--{{ cat.tile_accent }} reveal" href="{% url 'catalog:category' cat.slug %}">
-          <div class="category-tile__icon" aria-hidden="true">
-            <img src="{% static cat.icon_static %}" alt="" loading="lazy" decoding="async" width="64" height="64">
-          </div>
+        <a class="category-tile{% if cat.use_icon %} category-tile--{{ cat.tile_accent }}{% else %} category-tile--photo{% endif %} reveal" href="{% url 'catalog:category' cat.slug %}">
+          {% if cat.image %}
+            <img class="category-tile__photo" src="{{ cat.image.url }}" alt="{{ cat.name }}" loading="lazy" decoding="async" width="600" height="800">
+          {% else %}
+            <div class="category-tile__icon" aria-hidden="true">
+              <img src="{% static cat.icon_static %}" alt="" loading="lazy" decoding="async" width="64" height="64">
+            </div>
+          {% endif %}
           <span>{{ cat.name }}</span>
         </a>
       {% endfor %}
