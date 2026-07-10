@@ -218,34 +218,33 @@ class Product(TimeStampedModel):
 
     @property
     def card_color_swatches(self):
-        """Color swatches with image URLs for product gallery cards."""
-        by_color = {}
-        defaults = []
-        for img in self.images.all():
-            if img.color_id and img.color_id not in by_color and img.image:
-                by_color[img.color_id] = img.image.url
-            elif not img.color_id and img.image:
-                defaults.append(img.image.url)
+        """Color swatches with per-color image URLs for product cards."""
+        by_color: dict[int, str] = {}
+        gallery: list[str] = []
+        for img in self.images.select_related("color").order_by("sort_order"):
+            if not img.image:
+                continue
+            url = img.image.url
+            if img.color_id:
+                by_color.setdefault(img.color_id, url)
+            elif url not in gallery:
+                gallery.append(url)
         primary = (
             self.primary_image.image.url
             if self.primary_image and self.primary_image.image
-            else (defaults[0] if defaults else "")
+            else (gallery[0] if gallery else "")
         )
         swatches = []
-        for i, color in enumerate(self.available_colors.all()):
-            image = by_color.get(color.id)
-            if not image and defaults:
-                # Spread default gallery across colors when no per-color image yet
-                pool = defaults[1:] if len(defaults) > 1 else defaults
-                image = pool[i % len(pool)]
+        for color in self.available_colors.all():
+            image = by_color.get(color.id) or primary
             if not image:
-                image = primary
+                continue
             swatches.append(
                 {
                     "id": color.id,
                     "hex": color.hex_code or "#cccccc",
                     "name": color.name,
-                    "image": image or "",
+                    "image": image,
                 }
             )
         return swatches

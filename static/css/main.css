@@ -159,7 +159,7 @@ textarea {
 
 .page-home .hero-content {
   padding-top: calc(3.5rem + var(--header-h));
-  padding-bottom: 4.5rem;
+  padding-bottom: 6.5rem;
 }
 
 /* Solid header + dark nav text when mobile menu is open */
@@ -625,22 +625,22 @@ body.nav-open .site-header .header-search input {
   width: 100%;
   height: 100%;
   background-size: cover;
-  background-position: center center;
+  background-position: center top;
   background-repeat: no-repeat;
-  transform: scale(1.02);
+  transform: scale(1);
   will-change: transform;
 }
 
 .hero-slide.is-active .hero-media {
-  animation: kenBurns 7s var(--ease) forwards;
+  animation: heroKen 10s var(--ease) forwards;
 }
 
-@keyframes kenBurns {
+@keyframes heroKen {
   from {
-    transform: scale(1.12);
+    transform: scale(1.04);
   }
   to {
-    transform: scale(1.02);
+    transform: scale(1);
   }
 }
 
@@ -665,7 +665,7 @@ body.nav-open .site-header .header-search input {
   max-width: 1280px;
   width: 100%;
   margin: 0 auto;
-  padding: 6rem 1.25rem 4.5rem;
+  padding: 6rem 1.25rem 6rem;
 }
 
 .hero-brand {
@@ -747,7 +747,7 @@ body.nav-open .site-header .header-search input {
 
 .hero-dots {
   position: absolute;
-  bottom: 1.5rem;
+  bottom: 2rem;
   left: 50%;
   transform: translateX(-50%);
   z-index: 3;
@@ -1382,25 +1382,25 @@ body.nav-open .site-header .header-search input {
 .gallery-main {
   position: relative;
   width: 100%;
-  aspect-ratio: 3 / 4;
+  min-height: 420px;
   max-height: min(88vh, 920px);
+  aspect-ratio: 3 / 4;
   background: transparent;
   border: 0;
   overflow: hidden;
   cursor: zoom-in;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .gallery-main img {
   display: block;
   width: 100%;
   height: 100%;
-  object-fit: cover;
-  object-position: center center;
-  transition: opacity 0.35s ease, transform 0.4s var(--ease);
-}
-
-.gallery-main:hover img {
-  transform: scale(1.02);
+  object-fit: contain;
+  object-position: center top;
+  transition: opacity 0.35s ease;
 }
 
 .gallery-zoom-btn {
@@ -2082,7 +2082,7 @@ body.nav-open .site-header .header-search input {
   }
   .page-home .hero-content {
     padding-top: calc(4.5rem + var(--header-h));
-    padding-bottom: 2.5rem;
+    padding-bottom: 3.75rem;
   }
   .hero-brand {
     font-size: clamp(2rem, 11vw, 3rem);
@@ -2136,7 +2136,7 @@ body.nav-open .site-header .header-search input {
     width: 100%;
     height: 100%;
     background-size: cover;
-    background-position: center center;
+    background-position: center top;
     transform: none;
   }
 

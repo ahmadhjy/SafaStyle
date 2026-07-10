@@ -330,7 +330,13 @@
     }
     front.src = url;
     front.alt = alt || card.dataset.name || "";
-    if (back && back.src === url) back.removeAttribute("src");
+    if (back) {
+      if (back.src === url) {
+        back.removeAttribute("src");
+      } else {
+        back.style.opacity = "0";
+      }
+    }
   }
 
   document.addEventListener("click", (e) => {
