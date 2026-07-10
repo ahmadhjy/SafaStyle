@@ -1,13 +1,8 @@
-# Safa Style — deploy from your PC to the DigitalOcean droplet.
-#
-# First time:
-#   1. Copy deploy.config.example to deploy.config
-#   2. Push code to GitHub
-#   3. SSH into the droplet once and run setup (see README)
+# Safa Style - deploy from your PC to the DigitalOcean droplet.
 #
 # Every update:
-#   git add . && git commit -m "..." && git push
-#   .\deploy.ps1
+#   .\deploy.bat
+#   or: .\deploy.ps1 -Push
 
 param(
     [switch]$Setup,
@@ -21,7 +16,7 @@ $Root = Split-Path -Parent $MyInvocation.MyCommand.Path
 $ConfigFile = Join-Path $Root "deploy.config"
 
 if (-not (Test-Path $ConfigFile)) {
-    Write-Host "Missing deploy.config — copy deploy.config.example and set DROPLET_IP + SSH_USER." -ForegroundColor Yellow
+    Write-Host "Missing deploy.config - copy deploy.config.example and set DROPLET_IP + SSH_USER." -ForegroundColor Yellow
     exit 1
 }
 
@@ -45,8 +40,8 @@ $sshArgs = @("-o", "ConnectTimeout=15")
 Write-Host "Connecting to $target ..." -ForegroundColor Cyan
 
 if ($Setup) {
-    Write-Host "Running one-time server setup (this takes a few minutes)..." -ForegroundColor Cyan
-    ssh @sshArgs $target "bash -s" < (Join-Path $Root "deploy\setup-server.sh")
+    Write-Host "Running one-time server setup..." -ForegroundColor Cyan
+    Get-Content (Join-Path $Root "deploy\setup-server.sh") | ssh @sshArgs $target "bash -s"
     exit $LASTEXITCODE
 }
 
@@ -55,7 +50,6 @@ if ($Status) {
     exit $LASTEXITCODE
 }
 
-# Normal deploy: optional git push, then server pull + restart.
 if ($Push) {
     Write-Host "Pushing to GitHub..." -ForegroundColor Cyan
     git add -A
@@ -71,5 +65,5 @@ if ($Push) {
 }
 
 Write-Host "Deploying latest main branch..." -ForegroundColor Cyan
-ssh @sshArgs $target 'cd /var/www/safastyle && bash deploy/deploy.sh'
+ssh @sshArgs $target "bash -lc 'cd /var/www/safastyle && bash deploy/deploy.sh'"
 exit $LASTEXITCODE
