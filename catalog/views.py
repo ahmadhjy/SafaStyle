@@ -13,14 +13,14 @@ HERO_BANNER_SLIDES = (
         "image": "img/banners/banner1.png",
         "width": 1942,
         "height": 809,
-        "eyebrow": "Ramadan Specials · Sets · Pants Set",
+        "eyebrow": "New Arrivals",
         "object_position": "center center",
     },
     {
         "image": "img/banners/banner2.png",
         "width": 1973,
         "height": 797,
-        "eyebrow": "New Arrivals · Dresses",
+        "eyebrow": "Sets",
         "object_position": "62% center",
     },
     {
