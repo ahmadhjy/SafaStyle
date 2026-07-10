@@ -6,72 +6,34 @@ from django.views.decorators.http import require_GET
 from .models import Category, Product, ProductImage, ProductVariation
 
 
-# Hero slider — product slugs from demo catalog (images downloaded to media/).
-HERO_PRODUCT_SLUGS = (
-    "classy-linen-set",
-    "long-crepe-set",
-    "embroidered-abaya",
+# Homepage hero banners (wide ~2.4:1 PNGs in static/img/banners/).
+HERO_BANNER_SLIDES = (
+    {
+        "image": "img/banners/banner1.png",
+        "width": 1942,
+        "height": 809,
+        "eyebrow": "Ramadan Specials · Sets · Pants Set",
+        "object_position": "center center",
+    },
+    {
+        "image": "img/banners/banner2.png",
+        "width": 1973,
+        "height": 797,
+        "eyebrow": "New Arrivals · Dresses",
+        "object_position": "62% center",
+    },
+    {
+        "image": "img/banners/banner3.png",
+        "width": 1973,
+        "height": 797,
+        "eyebrow": "Modest Fashion · Abayas",
+        "object_position": "center center",
+    },
 )
 
 
-def _build_hero_slides(products, request=None, limit=3):
-    """Hero slides from featured products with downloaded images."""
-    by_slug = {p.slug: p for p in products if p.primary_image is not None}
-    slides = []
-    seen_urls: set[str] = set()
-
-    def abs_url(url: str) -> str:
-        if not url:
-            return url
-        if url.startswith(("http://", "https://")):
-            return url
-        if request:
-            return request.build_absolute_uri(url)
-        return url
-
-    def add_slide(product, eyebrow: str | None = None):
-        img = product.primary_image
-        if not img or not img.image:
-            return
-        url = abs_url(img.image.url)
-        if url in seen_urls:
-            alt_img = product.images.exclude(pk=img.pk).order_by("sort_order").first()
-            if alt_img and alt_img.image:
-                url = abs_url(alt_img.image.url)
-        if url in seen_urls:
-            return
-        seen_urls.add(url)
-        cats = list(product.categories.all())
-        label = eyebrow or " · ".join(c.name for c in cats[:3]) or "New arrivals"
-        slides.append(
-            {
-                "image_url": url,
-                "eyebrow": label,
-                "url": product.get_absolute_url(),
-                "name": product.name,
-            }
-        )
-
-    for slug in HERO_PRODUCT_SLUGS:
-        if len(slides) >= limit:
-            break
-        product = by_slug.get(slug)
-        if product:
-            add_slide(product)
-
-    if len(slides) < limit:
-        ranked = sorted(
-            [p for p in products if p.primary_image],
-            key=lambda p: (not p.is_featured, -p.created_at.timestamp()),
-        )
-        for product in ranked:
-            if len(slides) >= limit:
-                break
-            if any(s.get("name") == product.name for s in slides):
-                continue
-            add_slide(product)
-
-    return slides[:limit]
+def hero_slides():
+    return HERO_BANNER_SLIDES
 
 
 def _category_image_map():
@@ -101,7 +63,7 @@ def home(request):
         .distinct()
     )
 
-    slides = _build_hero_slides(products, request=request)
+    slides = hero_slides()
 
     sale_items = [p for p in products if p.has_sale][:4]
     latest = sorted(products, key=lambda p: p.created_at, reverse=True)[:8]

@@ -7,7 +7,7 @@
 
 {% block extra_head %}
 {% if slides %}
-<link rel="preload" as="image" href="{{ slides.0.image_url }}" fetchpriority="high">
+<link rel="preload" as="image" href="{% static slides.0.image %}" fetchpriority="high">
 {% endif %}
 {% endblock %}
 
@@ -16,8 +16,15 @@
   <div class="hero-stage">
     <div class="hero-track">
     {% for slide in slides %}
-      <div class="hero-slide {% if forloop.first %}is-active{% endif %}" data-slide role="group" aria-roledescription="slide">
-        <div class="hero-media" style="background-image:url('{{ slide.image_url }}')" aria-hidden="true"></div>
+      <div class="hero-slide {% if forloop.first %}is-active{% endif %}" data-slide role="group" aria-roledescription="slide" aria-label="Slide {{ forloop.counter }} of {{ slides|length }}">
+        <img class="hero-media"
+             src="{% static slide.image %}"
+             alt=""
+             width="{{ slide.width }}"
+             height="{{ slide.height }}"
+             decoding="async"
+             {% if forloop.first %}loading="eager" fetchpriority="high"{% else %}loading="lazy"{% endif %}
+             style="--hero-pos: {{ slide.object_position|default:'center center' }}">
         <div class="hero-scrim" aria-hidden="true"></div>
         <div class="hero-content">
           <p class="eyebrow eyebrow--light">{{ slide.eyebrow }}</p>
@@ -51,21 +58,21 @@
         </div>
       </div>
     {% endfor %}
-  </div>
+    </div>
 
-  {% if slides|length > 1 %}
-  <button class="hero-arrow hero-arrow--prev" data-slide-prev aria-label="Previous slide">
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 6l-6 6 6 6"/></svg>
-  </button>
-  <button class="hero-arrow hero-arrow--next" data-slide-next aria-label="Next slide">
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 6l6 6-6 6"/></svg>
-  </button>
-  <div class="hero-dots" role="tablist" aria-label="Slides">
-    {% for slide in slides %}
-      <button class="hero-dot {% if forloop.first %}is-active{% endif %}" data-slide-dot="{{ forloop.counter0 }}" aria-label="Slide {{ forloop.counter }}"></button>
-    {% endfor %}
-  </div>
-  {% endif %}
+    {% if slides|length > 1 %}
+    <button class="hero-arrow hero-arrow--prev" data-slide-prev aria-label="Previous slide">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 6l-6 6 6 6"/></svg>
+    </button>
+    <button class="hero-arrow hero-arrow--next" data-slide-next aria-label="Next slide">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 6l6 6-6 6"/></svg>
+    </button>
+    <div class="hero-dots" role="tablist" aria-label="Slides">
+      {% for slide in slides %}
+        <button class="hero-dot {% if forloop.first %}is-active{% endif %}" data-slide-dot="{{ forloop.counter0 }}" aria-label="Slide {{ forloop.counter }}"></button>
+      {% endfor %}
+    </div>
+    {% endif %}
   </div>
 
   <div class="hero-marquee" aria-hidden="true">

@@ -38,7 +38,10 @@
     const meta = document.getElementById("cart-meta");
     if (meta) meta.textContent = `${count} / $${Number(total).toFixed(2)}`;
     const badge = document.getElementById("cart-badge");
-    if (badge) badge.textContent = String(count);
+    if (badge) {
+      badge.textContent = String(count);
+      badge.classList.toggle("is-empty", count < 1);
+    }
     const cartBtn = document.querySelector(".cart-btn");
     if (cartBtn) {
       cartBtn.setAttribute("aria-label", `Bag, ${count} item${count === 1 ? "" : "s"}`);

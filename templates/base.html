@@ -79,7 +79,7 @@
             <path d="M8 10V8a4 4 0 0 1 8 0v2"/>
             <path d="M5 10h14a1 1 0 0 1 1 1.1l-1.1 10a1 1 0 0 1-1 .9H6.1a1 1 0 0 1-1-.9L4 11.1A1 1 0 0 1 5 10z"/>
           </svg>
-          <span class="cart-badge" id="cart-badge">{{ cart_count }}</span>
+          <span class="cart-badge{% if not cart_count %} is-empty{% endif %}" id="cart-badge">{{ cart_count }}</span>
           <span class="cart-meta" id="cart-meta">{{ cart_count }} / ${{ cart_total|floatformat:2 }}</span>
         </a>
         <button type="button" class="icon-btn menu-toggle" aria-label="Menu" data-menu-toggle>

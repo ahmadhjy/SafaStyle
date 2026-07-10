@@ -435,24 +435,38 @@ body.nav-open .site-header .header-search input {
 
 .cart-btn {
   position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 40px;
+  min-height: 40px;
+  padding: 0.35rem;
 }
 
 .cart-badge {
   display: none;
   position: absolute;
-  top: 2px;
+  top: 0;
   right: 0;
-  min-width: 18px;
-  height: 18px;
-  padding: 0 5px;
+  transform: translate(35%, -35%);
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
   border-radius: 999px;
   background: var(--gold);
   color: #111;
-  font-size: 0.65rem;
+  font-size: 0.58rem;
   font-weight: 700;
-  line-height: 18px;
+  line-height: 16px;
   text-align: center;
   pointer-events: none;
+  border: 2px solid #fff;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.18);
+  z-index: 1;
+}
+
+.cart-badge.is-empty {
+  display: none !important;
 }
 
 .menu-toggle {
@@ -593,15 +607,13 @@ body.nav-open .site-header .header-search input {
   }
 }
 
-/* Hero slider — stage then belt, stacked with no gap between them */
+/* Hero slider — wide banner stage + belt */
 .hero {
   position: relative;
   display: flex;
   flex-direction: column;
   width: 100%;
   max-width: 100%;
-  min-height: min(92vh, 880px);
-  min-height: min(92dvh, 880px);
   overflow: hidden;
   background: #17111f;
   color: #fff;
@@ -609,11 +621,11 @@ body.nav-open .site-header .header-search input {
 
 .hero-stage {
   position: relative;
-  flex: 1 1 auto;
   width: 100%;
-  min-height: clamp(420px, 72vh, 820px);
-  min-height: clamp(420px, 72dvh, 820px);
+  height: clamp(320px, 38vw, 720px);
+  height: clamp(320px, 38vw, min(72dvh, 720px));
   background: #17111f;
+  isolation: isolate;
 }
 
 .hero-track {
@@ -646,20 +658,20 @@ body.nav-open .site-header .header-search input {
   inset: 0;
   width: 100%;
   height: 100%;
-  background-size: cover;
-  background-position: center center;
-  background-repeat: no-repeat;
+  object-fit: cover;
+  object-position: var(--hero-pos, center center);
+  display: block;
   transform: scale(1.02);
   will-change: transform;
 }
 
 .hero-slide.is-active .hero-media {
-  animation: kenBurns 7s var(--ease) forwards;
+  animation: heroBannerIn 8s var(--ease) forwards;
 }
 
-@keyframes kenBurns {
+@keyframes heroBannerIn {
   from {
-    transform: scale(1.12);
+    transform: scale(1.08);
   }
   to {
     transform: scale(1.02);
@@ -676,9 +688,10 @@ body.nav-open .site-header .header-search input {
 .hero-scrim {
   position: absolute;
   inset: 0;
+  pointer-events: none;
   background:
-    linear-gradient(90deg, rgba(15, 10, 20, 0.85) 0%, rgba(15, 10, 20, 0.4) 45%, rgba(15, 10, 20, 0.1) 75%),
-    linear-gradient(0deg, rgba(15, 10, 20, 0.88) 0%, transparent 42%);
+    linear-gradient(90deg, rgba(15, 10, 20, 0.82) 0%, rgba(15, 10, 20, 0.35) 42%, rgba(15, 10, 20, 0.08) 70%),
+    linear-gradient(0deg, rgba(15, 10, 20, 0.75) 0%, transparent 38%);
 }
 
 .hero-content {
@@ -2037,14 +2050,28 @@ body.nav-open .site-header .header-search input {
     display: none;
   }
   .cart-badge {
-    display: block;
+    display: flex;
+    align-items: center;
+    justify-content: center;
   }
   .page-home .site-header--hero:not(.is-scrolled) .cart-badge {
     background: var(--gold);
     color: #111;
+    border-color: rgba(255, 255, 255, 0.92);
   }
   .footer-grid {
     gap: 2.25rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .hero-stage {
+    height: clamp(400px, 56dvh, 560px);
+  }
+
+  .hero-scrim {
+    background:
+      linear-gradient(0deg, rgba(15, 10, 20, 0.9) 0%, rgba(15, 10, 20, 0.45) 45%, rgba(15, 10, 20, 0.2) 100%);
   }
 }
 
@@ -2062,11 +2089,8 @@ body.nav-open .site-header .header-search input {
     grid-template-columns: 1fr;
   }
 
-  .hero {
-    min-height: auto;
-  }
   .hero-stage {
-    min-height: clamp(360px, 62dvh, 640px);
+    height: clamp(420px, 62dvh, 580px);
   }
   .page-home .hero-content {
     padding-top: calc(4.5rem + var(--header-h));
@@ -2120,16 +2144,7 @@ body.nav-open .site-header .header-search input {
   }
 
   .hero-media {
-    inset: 0;
-    width: 100%;
-    height: 100%;
-    background-size: cover;
-    background-position: center center;
-    transform: none;
-  }
-
-  .hero-slide.is-active .hero-media {
-    animation: none;
+    object-position: var(--hero-pos, center 35%);
   }
   .feature-card {
     aspect-ratio: 3 / 4;
