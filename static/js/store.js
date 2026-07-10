@@ -181,7 +181,7 @@
         sizeBlock.hidden = true;
       }
 
-      this.setImage(null);
+      this.setImage(null, null);
       // Auto-select the first color so gallery + price populate.
       if (p.colors.length) this.selectColor(p.colors[0]);
       this.update();
@@ -196,8 +196,15 @@
       return imgs[key] && imgs[key].length ? imgs[key] : imgs.default || [];
     },
 
-    setImage(colorId) {
-      const imgs = this.imagesForColor(colorId);
+    previewImageForColor(color) {
+      if (color && color.preview_image) return color.preview_image;
+      const imgs = this.imagesForColor(color ? color.id : null);
+      return imgs.length ? imgs[0].url : "";
+    },
+
+    setImage(colorId, colorObj) {
+      const url = colorObj ? this.previewImageForColor(colorObj) : "";
+      const imgs = url ? [{ url, alt: "" }] : this.imagesForColor(colorId);
       const el = document.getElementById("qv-img");
       if (imgs.length) {
         el.src = imgs[0].url;
@@ -213,7 +220,7 @@
       [...document.querySelectorAll("#qv-colors .qv-swatch")].forEach((b) =>
         b.classList.toggle("is-active", b._color.id === c.id)
       );
-      this.setImage(c.id);
+      this.setImage(c.id, c);
       this.syncSizes();
       this.update();
     },
@@ -311,6 +318,21 @@
   };
 
   // --- Wire up product cards ----------------------------------------------
+  function setCardImage(card, url, alt) {
+    if (!url) return;
+    const media = card.querySelector(".product-media");
+    const front = card.querySelector(".pc-img--front");
+    const back = card.querySelector(".pc-img--back");
+    if (!front) return;
+    if (media) {
+      media.classList.add("is-swapping");
+      setTimeout(() => media.classList.remove("is-swapping"), 260);
+    }
+    front.src = url;
+    front.alt = alt || card.dataset.name || "";
+    if (back && back.src === url) back.removeAttribute("src");
+  }
+
   document.addEventListener("click", (e) => {
     const colorDot = e.target.closest(".pc-color-dot");
     if (colorDot) {
@@ -318,14 +340,13 @@
       e.stopPropagation();
       const card = colorDot.closest(".product-card");
       if (!card) return;
-      card.querySelectorAll(".pc-color-dot").forEach((d) => d.classList.remove("is-active"));
+      card.querySelectorAll(".pc-color-dot").forEach((d) => {
+        d.classList.remove("is-active");
+        d.setAttribute("aria-pressed", "false");
+      });
       colorDot.classList.add("is-active");
-      const url = colorDot.dataset.image;
-      const front = card.querySelector(".pc-img--front");
-      if (url && front) {
-        front.src = url;
-        front.alt = colorDot.getAttribute("title") || card.dataset.name || "";
-      }
+      colorDot.setAttribute("aria-pressed", "true");
+      setCardImage(card, colorDot.dataset.image, colorDot.getAttribute("title"));
       return;
     }
 

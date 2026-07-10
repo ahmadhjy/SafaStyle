@@ -3,59 +3,58 @@
 {% block title %}Bag — {{ site.store_name }}{% endblock %}
 
 {% block content %}
-<div class="container" style="padding:2.5rem 0 4rem">
-  <h1 style="font-family:var(--font-display);font-size:2.8rem;margin:0 0 1.5rem">Your bag</h1>
+<div class="container cart-page">
+  <h1 class="cart-title">Your bag</h1>
 
   {% if cart %}
-  <table class="cart-table">
-    <thead>
-      <tr>
-        <th>Product</th>
-        <th>Price</th>
-        <th>Qty</th>
-        <th>Total</th>
-        <th></th>
-      </tr>
-    </thead>
-    <tbody>
+  <div class="cart-layout">
+    <div class="cart-items">
       {% for item in cart %}
-      <tr>
-        <td>
-          <div class="cart-item">
-            {% if item.image %}
-              <img src="{{ item.image }}" alt="" width="72" height="96">
-            {% endif %}
+      <article class="cart-card">
+        <div class="cart-card-media">
+          {% if item.image %}
+            <img src="{{ item.image }}" alt="" loading="lazy" decoding="async">
+          {% else %}
+            <div class="cart-card-ph"></div>
+          {% endif %}
+        </div>
+        <div class="cart-card-body">
+          <div class="cart-card-top">
             <div>
-              <strong>{{ item.name }}</strong>
-              {% if item.label %}<div style="color:var(--muted);font-size:0.9rem">{{ item.label }}</div>{% endif %}
+              <strong class="cart-card-name">{{ item.name }}</strong>
+              {% if item.label %}<div class="cart-card-meta">{{ item.label }}</div>{% endif %}
             </div>
+            <form method="post" action="{% url 'orders:cart_remove' item.variation.id %}">
+              {% csrf_token %}
+              <button type="submit" class="cart-remove" aria-label="Remove">×</button>
+            </form>
           </div>
-        </td>
-        <td>${{ item.price }}</td>
-        <td>
-          <form method="post" action="{% url 'orders:cart_update' item.variation.id %}">
-            {% csrf_token %}
-            <input type="number" name="quantity" value="{{ item.qty }}" min="0" max="99" style="width:64px" onchange="this.form.submit()">
-          </form>
-        </td>
-        <td>${{ item.total }}</td>
-        <td>
-          <form method="post" action="{% url 'orders:cart_remove' item.variation.id %}">
-            {% csrf_token %}
-            <button type="submit" class="btn btn-ghost" style="min-height:36px;padding:0.4rem 0.7rem">Remove</button>
-          </form>
-        </td>
-      </tr>
+          <div class="cart-card-bottom">
+            <span class="cart-card-price">${{ item.price }}</span>
+            <form method="post" action="{% url 'orders:cart_update' item.variation.id %}" class="cart-qty-form">
+              {% csrf_token %}
+              <label class="sr-only" for="qty-{{ item.variation.id }}">Quantity</label>
+              <input id="qty-{{ item.variation.id }}" type="number" name="quantity" value="{{ item.qty }}" min="0" max="99" onchange="this.form.submit()">
+            </form>
+            <strong class="cart-card-total">${{ item.total }}</strong>
+          </div>
+        </div>
+      </article>
       {% endfor %}
-    </tbody>
-  </table>
-
-  <div style="display:flex;justify-content:space-between;align-items:center;margin-top:1.5rem;gap:1rem;flex-wrap:wrap">
-    <a class="btn btn-ghost" href="{% url 'catalog:shop' %}">Continue shopping</a>
-    <div style="text-align:right">
-      <div class="order-total" style="margin:0 0 1rem"><span>Subtotal</span><strong>${{ cart.subtotal }}</strong></div>
-      <a class="btn btn-gold" href="{% url 'orders:checkout' %}">Checkout</a>
     </div>
+
+    <aside class="cart-summary">
+      <div class="order-box cart-summary-box">
+        <h2>Order summary</h2>
+        <div class="order-total">
+          <span>Subtotal</span>
+          <strong>${{ cart.subtotal }}</strong>
+        </div>
+        <p class="cart-summary-note">Shipping calculated at checkout. Cash on delivery available.</p>
+        <a class="btn btn-gold btn-block" href="{% url 'orders:checkout' %}">Checkout</a>
+        <a class="btn btn-ghost btn-block" href="{% url 'catalog:shop' %}">Continue shopping</a>
+      </div>
+    </aside>
   </div>
   {% else %}
   <div class="empty-state">

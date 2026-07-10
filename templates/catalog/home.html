@@ -13,7 +13,8 @@
 
 {% block content %}
 <section class="hero" data-slider aria-roledescription="carousel" aria-label="Featured">
-  <div class="hero-track">
+  <div class="hero-stage">
+    <div class="hero-track">
     {% for slide in slides %}
       <div class="hero-slide {% if forloop.first %}is-active{% endif %}" data-slide role="group" aria-roledescription="slide">
         <div class="hero-media" style="background-image:url('{{ slide.image_url }}')" aria-hidden="true"></div>
@@ -25,7 +26,7 @@
             <span class="hs-line">Modern.</span>
             <span class="hs-line gold">Made for you.</span>
           </h1>
-          <p class="hero-lead">{{ site.tagline }} Quality fabrics, tailored cuts, and statement modest looks — new arrivals every week.</p>
+          <p class="hero-lead">Quality fabrics, tailored cuts, and statement modest looks — new arrivals every week.</p>
           <div class="hero-actions">
             <a class="btn btn-gold" href="{% url 'catalog:shop' %}">
               <span>Shop the collection</span>
@@ -65,18 +66,19 @@
     {% endfor %}
   </div>
   {% endif %}
-</section>
-
-<div class="hero-marquee" aria-hidden="true">
-  <div class="marquee-track">
-    {% for i in "123" %}
-      <span>Free styling</span><span class="dot">✦</span>
-      <span>Cash on delivery</span><span class="dot">✦</span>
-      <span>Worldwide shipping</span><span class="dot">✦</span>
-      <span>New arrivals weekly</span><span class="dot">✦</span>
-    {% endfor %}
   </div>
-</div>
+
+  <div class="hero-marquee" aria-hidden="true">
+    <div class="marquee-track">
+      {% for i in "123" %}
+        <span>Free styling</span><span class="dot">✦</span>
+        <span>Cash on delivery</span><span class="dot">✦</span>
+        <span>Worldwide shipping</span><span class="dot">✦</span>
+        <span>New arrivals weekly</span><span class="dot">✦</span>
+      {% endfor %}
+    </div>
+  </div>
+</section>
 
 <section class="pillars reveal-group">
   <div class="pillar pillar--c1 reveal"><h3>Made for you.</h3><p>Quality fabrics • Tailored cuts • All-day comfort.</p></div>

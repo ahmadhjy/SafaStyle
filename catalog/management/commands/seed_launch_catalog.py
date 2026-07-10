@@ -1,6 +1,5 @@
 """
-Seed 10 launch-ready products with real structure (colors, sizes, variations,
-images). Used when the live WooCommerce import is unavailable.
+Seed 5 Safa demo products with distinct real photos (no duplicate ChatGPT shots).
 
 Usage:
   python manage.py seed_launch_catalog
@@ -8,10 +7,10 @@ Usage:
 
 from __future__ import annotations
 
-import io
-import urllib.request
 from decimal import Decimal
+from pathlib import Path
 
+from django.conf import settings
 from django.core.files.base import ContentFile
 from django.core.management import call_command
 from django.core.management.base import BaseCommand
@@ -19,65 +18,66 @@ from django.utils.text import slugify
 
 from catalog.models import Category, Color, MediaAsset, Product, ProductImage, ProductVariation, Size
 
-# Modest-fashion reference photos (Unsplash — high quality, free to use).
-IMAGE_URLS = [
-    "https://images.unsplash.com/photo-1595777457583-95e059d581b8?w=1400&q=88",
-    "https://images.unsplash.com/photo-1539008835657-9e8e9680c956?w=1400&q=88",
-    "https://images.unsplash.com/photo-1515372039744-b8f02a3ae446?w=1400&q=88",
-    "https://images.unsplash.com/photo-1469334031218-e382a71b716b?w=1400&q=88",
-    "https://images.unsplash.com/photo-1496747611176-843222e1e57c?w=1400&q=88",
-    "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=1400&q=88",
-    "https://images.unsplash.com/photo-1509631179647-0177331693ae?w=1400&q=88",
-    "https://images.unsplash.com/photo-1521577352947-9bb58764b69a?w=1400&q=88",
-    "https://images.unsplash.com/photo-1585487000160-6ebcfceb0d6d?w=1400&q=88",
-    "https://images.unsplash.com/photo-1617137968427-85924c800a43?w=1400&q=88",
-    "https://images.unsplash.com/photo-1571513722275-a132d769a282?w=1400&q=88",
-    "https://images.unsplash.com/photo-1581044777550-4cfa60707c03?w=1400&q=88",
-    "https://images.unsplash.com/photo-1594633312681-425a7b956cc9?w=1400&q=88",
-    "https://images.unsplash.com/photo-1618354691373-d851c5c3a990?w=1400&q=88",
-    "https://images.unsplash.com/photo-1594938298605-cd64d68329e3?w=1400&q=88",
-    "https://images.unsplash.com/photo-1591047139829-d91aecb6caea?w=1400&q=88",
-    "https://images.unsplash.com/photo-1583497013659-9d0935a2a2f6?w=1400&q=88",
-    "https://images.unsplash.com/photo-1550614000-0b1a4a4a4a4a?w=1400&q=88",
-    "https://images.unsplash.com/photo-1566174053879-31528523f8ae?w=1400&q=88",
-    "https://images.unsplash.com/photo-1572804013309-59a881b3e962?w=1400&q=88",
-]
+# Each product gets unique files — matches the Safa storefront screenshots.
+PRODUCT_MEDIA: dict[str, list[str]] = {
+    "new-linen-set": [
+        "ChatGPT-Image-Feb-14-2026-03_06_52-PM_bnqgroA.png",
+        "IMG_7441.png",
+        "IMG_7442.png",
+    ],
+    "classy-linen-set": [
+        "ChatGPT-Image-Feb-14-2026-03_06_52-PM_u23FbVX.png",
+        "IMG_7521.png",
+        "IMG_7504.png",
+    ],
+    "belted-wide-leg-pants": [
+        "IMG_7358-2.png",
+        "IMG_7360-1.png",
+        "IMG_7361-1.png",
+    ],
+    "embroidered-abaya": [
+        "IMG_1013-scaled.jpeg",
+        "IMG_1015-scaled.jpeg",
+        "IMG_0871-scaled.jpeg",
+    ],
+    "royal-gold-embroidered-abaya": [
+        "IMG_1017-scaled.jpeg",
+        "IMG_1023-scaled.jpeg",
+        "IMG_1025-scaled.jpeg",
+    ],
+}
+
+CATEGORY_COVER = {
+    "sets": "new-linen-set",
+    "dresses": "embroidered-abaya",
+    "pants": "belted-wide-leg-pants",
+}
 
 CATALOG = [
     {
-        "name": "New Linen Set",
+        "name": "Classy Linen Set",
         "category": "Sets",
-        "price": "45.00",
-        "sale": "35.00",
-        "colors": ["Black", "Beige", "Camel"],
+        "price": "50.00",
+        "sale": "25.00",
+        "colors": ["Camel", "Beige", "Off White"],
         "sizes": ["1", "2", "3"],
-        "short": "Relaxed linen co-ord with wide-leg pants.",
-        "desc": "A breathable linen set designed for everyday modest dressing. Soft hand-feel, easy movement, and a clean silhouette.",
+        "short": "Refined linen co-ord with subtle detailing.",
+        "desc": "An elevated take on our linen set — minimal, fresh, and easy to style for day or evening.",
     },
     {
-        "name": "Classic Linen Set",
-        "category": "Sets",
-        "price": "48.00",
-        "sale": None,
-        "colors": ["Black", "Brown", "offwhite"],
+        "name": "Belted Wide-Leg Pants",
+        "category": "Pants",
+        "price": "38.00",
+        "sale": "29.00",
+        "colors": ["Black", "Beige", "Brown"],
         "sizes": ["1", "2", "3"],
-        "short": "Timeless linen co-ord in a tailored cut.",
-        "desc": "Our classic linen set pairs a structured top with flowing pants — polished enough for outings, comfortable enough for all day.",
-    },
-    {
-        "name": "Long Linen Set",
-        "category": "Sets",
-        "price": "52.00",
-        "sale": "42.00",
-        "colors": ["Beige", "Olive Green", "Black"],
-        "sizes": ["1", "2", "3"],
-        "short": "Extended-length linen set with elegant drape.",
-        "desc": "Extra length through the top and pant for a refined modest look. Lightweight linen that keeps its shape.",
+        "short": "High-waist wide-leg pant with matching belt.",
+        "desc": "Flowing wide-leg pants with a removable belt. Pairs perfectly with our tops and blazers.",
     },
     {
         "name": "Embroidered Abaya",
         "category": "Dresses",
-        "price": "65.00",
+        "price": "50.00",
         "sale": None,
         "colors": ["Black", "Burgundy"],
         "sizes": ["1", "2", "3"],
@@ -88,67 +88,27 @@ CATALOG = [
         "name": "Royal Gold Embroidered Abaya",
         "category": "Dresses",
         "price": "78.00",
-        "sale": "68.00",
+        "sale": "70.00",
         "colors": ["Black", "Camel"],
         "sizes": ["1", "2", "3"],
         "short": "Gold-thread embroidery on flowing crepe.",
         "desc": "Elevated evening abaya with gold embroidery accents. Designed to drape beautifully with every step.",
     },
     {
-        "name": "Front Zip Abaya",
-        "category": "Dresses",
-        "price": "55.00",
-        "sale": None,
-        "colors": ["Black", "Navy Blue", "Gray"],
-        "sizes": ["1", "2", "3"],
-        "short": "Practical front-zip abaya in soft crepe.",
-        "desc": "Easy to wear with a discreet front zip closure. A wardrobe essential in a modest, modern cut.",
-    },
-    {
-        "name": "Belted Wide-Leg Pants",
-        "category": "Pants",
-        "price": "38.00",
-        "sale": "32.00",
-        "colors": ["Black", "Beige", "Brown"],
-        "sizes": ["1", "2", "3"],
-        "short": "High-waist wide-leg pant with matching belt.",
-        "desc": "Flowing wide-leg pants with a removable belt. Pairs perfectly with our tops and blazers.",
-    },
-    {
-        "name": "Sculpted Silhouette Blazer",
-        "category": "Jackets",
-        "price": "42.00",
-        "sale": None,
-        "colors": ["Black", "Camel", "Navy Blue"],
-        "sizes": ["1", "2", "3"],
-        "short": "Structured blazer with a modest longline cut.",
-        "desc": "Clean lines and a flattering longline shape. Layer over sets and dresses for a polished finish.",
-    },
-    {
-        "name": "Classy Linen Set",
+        "name": "New Linen Set",
         "category": "Sets",
-        "price": "50.00",
-        "sale": None,
-        "colors": ["offwhite", "Beige", "Mint Green"],
+        "price": "45.00",
+        "sale": "35.00",
+        "colors": ["Black", "Beige", "Camel"],
         "sizes": ["1", "2", "3"],
-        "short": "Refined linen set with subtle detailing.",
-        "desc": "A elevated take on our linen co-ord — minimal, fresh, and easy to style for day or evening.",
-    },
-    {
-        "name": "Eye Box Clutch",
-        "category": "Bags",
-        "price": "28.00",
-        "sale": "22.00",
-        "colors": ["Black", "Camel"],
-        "sizes": [],
-        "short": "Compact box clutch with gold hardware.",
-        "desc": "A chic evening clutch with structured shape and eye-catching hardware. Fits essentials with ease.",
+        "short": "Relaxed linen co-ord with wide-leg pants.",
+        "desc": "A breathable linen set designed for everyday modest dressing. Soft hand-feel and a clean silhouette.",
     },
 ]
 
 
 class Command(BaseCommand):
-    help = "Seed 10 launch products with images, variations and categories"
+    help = "Seed 5 demo products with distinct Safa photos"
 
     def handle(self, *args, **options):
         call_command("seed_store")
@@ -157,11 +117,16 @@ class Command(BaseCommand):
         Product.objects.all().delete()
         MediaAsset.objects.all().delete()
 
-        img_idx = 0
+        media_root = Path(settings.MEDIA_ROOT) / "library"
+        file_index = self._build_file_index(media_root)
+
+        products_by_slug: dict[str, Product] = {}
+
         for spec in CATALOG:
+            slug = slugify(spec["name"])
             product = Product.objects.create(
                 name=spec["name"],
-                slug=slugify(spec["name"]),
+                slug=slug,
                 short_description=spec["short"],
                 description=spec["desc"],
                 base_price=Decimal(spec["price"]),
@@ -170,6 +135,8 @@ class Command(BaseCommand):
                 is_featured=True,
                 is_on_sale=bool(spec.get("sale")),
             )
+            products_by_slug[slug] = product
+
             cat = Category.objects.filter(slug=slugify(spec["category"])).first()
             if cat:
                 product.categories.add(cat)
@@ -186,30 +153,65 @@ class Command(BaseCommand):
                 )
             ProductVariation.objects.filter(product=product).update(stock=12)
 
-            # Default gallery (2 images) + one image per color for the card slider.
-            for n in range(2):
-                url = IMAGE_URLS[img_idx % len(IMAGE_URLS)]
-                img_idx += 1
-                self._attach_image(product, url, sort=n, primary=(n == 0))
+            files = self._resolve_files(slug, file_index)
+            for n, path in enumerate(files):
+                self._attach_image(product, path, sort=n, primary=(n == 0))
             for i, color in enumerate(colors):
-                url = IMAGE_URLS[img_idx % len(IMAGE_URLS)]
-                img_idx += 1
-                self._attach_image(product, url, sort=10 + i, primary=False, color=color)
+                if i >= len(files):
+                    break
+                self._attach_image(
+                    product, files[i], sort=10 + i, primary=False, color=color
+                )
 
             self.stdout.write(f"  + {product.name}")
 
-        # Reactivate categories that have products.
+        self._assign_category_images(products_by_slug, file_index)
         Category.objects.filter(products__isnull=False).update(is_active=True)
-        self.stdout.write(self.style.SUCCESS("Seeded 10 launch products."))
+        Category.objects.filter(products__isnull=True).update(is_active=False)
+        self.stdout.write(self.style.SUCCESS(f"Seeded {len(CATALOG)} demo products with unique images."))
 
-    def _attach_image(self, product, url, sort=0, primary=False, color=None):
+    def _build_file_index(self, root: Path) -> dict[str, Path]:
+        index: dict[str, Path] = {}
+        if not root.exists():
+            return index
+        for path in root.rglob("*.*"):
+            if path.is_file():
+                index[path.name] = path
+        return index
+
+    def _resolve_files(self, slug: str, index: dict[str, Path]) -> list[Path]:
+        names = PRODUCT_MEDIA.get(slug, [])
+        files = []
+        for name in names:
+            path = index.get(name)
+            if path:
+                files.append(path)
+        return files
+
+    def _assign_category_images(self, products: dict[str, Product], index: dict[str, Path]):
+        for cat_slug, product_slug in CATEGORY_COVER.items():
+            cat = Category.objects.filter(slug=cat_slug).first()
+            product = products.get(product_slug)
+            if not cat or not product:
+                continue
+            img = product.images.filter(color__isnull=True).order_by("sort_order").first()
+            if not img or not img.image:
+                continue
+            try:
+                with img.image.open("rb") as fh:
+                    data = fh.read()
+                name = img.image.name.rsplit("/", 1)[-1]
+                cat.image.save(name, ContentFile(data), save=True)
+            except Exception as exc:
+                self.stderr.write(f"  category image {cat.name}: {exc}")
+
+    def _attach_image(self, product, source: Path, sort=0, primary=False, color=None):
         try:
-            req = urllib.request.Request(url, headers={"User-Agent": "SafaStyleSeeder/1.0"})
-            data = urllib.request.urlopen(req, timeout=60).read()
+            data = source.read_bytes()
+            name = source.name
         except Exception as exc:
-            self.stderr.write(f"    image download failed: {exc}")
+            self.stderr.write(f"    image read failed: {exc}")
             return
-        name = f"{slugify(product.name)}-{sort + 1}.jpg"
         asset = MediaAsset(title=f"{product.name} {sort + 1}")
         asset.file.save(name, ContentFile(data), save=True)
         img = ProductImage(

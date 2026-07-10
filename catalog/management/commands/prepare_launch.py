@@ -46,18 +46,18 @@ class Command(BaseCommand):
         self.stdout.write(f"Merged {merged} duplicate categor{'y' if merged == 1 else 'ies'}")
 
         if not options["skip_import"]:
-            try:
-                call_command(
-                    "import_woocommerce",
-                    fresh=True,
-                    limit=options["limit"],
-                    base_url="https://safastyle.com",
-                )
-            except Exception as exc:
-                self.stderr.write(self.style.WARNING(f"WooCommerce import failed: {exc}"))
+            from django.conf import settings as dj_settings
+
+            base_url = dj_settings.WOO_BASE_URL
+            call_command(
+                "import_woocommerce",
+                fresh=True,
+                limit=options["limit"],
+                base_url=base_url,
+            )
 
         if Product.objects.count() == 0:
-            self.stdout.write(self.style.WARNING("Import returned no products — seeding launch catalog."))
+            self.stdout.write(self.style.WARNING("No products from import — seeding 5 demo products."))
             call_command("seed_launch_catalog")
 
         assigned = self._assign_category_images()

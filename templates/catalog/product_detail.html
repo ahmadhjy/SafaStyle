@@ -33,17 +33,31 @@
   {% if user.is_staff %}<a href="/admin/catalog/product/{{ product.id }}/change/">Edit in admin</a>{% endif %}
 </div>
 {% endif %}
+
 <div class="container pdp" data-product-page data-product-id="{{ product.id }}">
-  <div class="gallery">
-    <div class="gallery-main">
+  <div class="pdp-gallery">
+    <div class="gallery-main" data-gallery-zoom>
       {% with img=product.primary_image %}
         <img id="gallery-main-img"
              src="{% if img %}{{ img.image.url }}{% else %}{% static 'img/hero-fallback.svg' %}{% endif %}"
              alt="{{ product.name }}"
-             width="800" height="1066">
+             decoding="async">
       {% endwith %}
+      <button type="button" class="gallery-zoom-btn" data-gallery-zoom-btn aria-label="Zoom image">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3M11 8v6M8 11h6"/></svg>
+      </button>
     </div>
-    <div class="gallery-thumbs" id="gallery-thumbs"></div>
+    {% if gallery_images|length > 1 %}
+    <div class="gallery-thumbs-scroll" aria-label="Product gallery thumbnails">
+      <div class="gallery-thumbs" id="gallery-thumbs">
+        {% for img in gallery_images %}
+          <button type="button" class="{% if forloop.first %}is-active{% endif %}" data-thumb-url="{{ img.image.url }}" data-thumb-color="{{ img.color_id|default:'' }}">
+            <img src="{{ img.image.url }}" alt="" loading="lazy" decoding="async" width="80" height="80">
+          </button>
+        {% endfor %}
+      </div>
+    </div>
+    {% endif %}
   </div>
 
   <div class="pdp-info">
@@ -105,12 +119,17 @@
     {% endif %}
 
     {% if product.description %}
-      <div class="prose" style="padding:1.5rem 0 0;margin-top:1.5rem;border-top:1px solid var(--line)">
-        <h2 style="margin-top:0">Description</h2>
+      <div class="prose pdp-desc">
+        <h2>Description</h2>
         <p>{{ product.description|linebreaksbr }}</p>
       </div>
     {% endif %}
   </div>
+</div>
+
+<div class="gallery-lightbox" id="gallery-lightbox" hidden>
+  <button type="button" class="gallery-lightbox-close" data-gallery-zoom-close aria-label="Close zoom">×</button>
+  <img id="gallery-lightbox-img" src="" alt="">
 </div>
 
 {% if related %}

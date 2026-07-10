@@ -69,7 +69,8 @@ DEFAULT_FROM_EMAIL=Safa Style <info@safastyle.com>
 ORDER_NOTIFICATION_EMAILS=info@safastyle.com,sales@safastyle.com
 CONTACT_EMAIL=info@safastyle.com
 EOF
-  chmod 600 .env
+  chown www-data:www-data .env
+  chmod 640 .env
   echo "    Created .env — set EMAIL_HOST_PASSWORD before going live."
 fi
 

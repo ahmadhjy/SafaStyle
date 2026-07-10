@@ -1,5 +1,6 @@
 from django import forms
 
+from .countries import COUNTRY_CHOICES
 from .models import Order
 
 
@@ -23,7 +24,7 @@ class CheckoutForm(forms.ModelForm):
             "first_name": forms.TextInput(attrs={"placeholder": "First name", "required": True}),
             "last_name": forms.TextInput(attrs={"placeholder": "Last name", "required": True}),
             "company": forms.TextInput(attrs={"placeholder": "Company name (optional)"}),
-            "country": forms.Select(choices=[("Lebanon", "Lebanon")]),
+            "country": forms.Select(choices=COUNTRY_CHOICES),
             "street_address": forms.TextInput(
                 attrs={"placeholder": "House number and street name"}
             ),

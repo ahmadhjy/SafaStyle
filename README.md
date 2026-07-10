@@ -69,13 +69,19 @@ You'll be asked for the droplet password (from DigitalOcean email) or it connect
 
 ### Every update (one command)
 
-After you change code locally:
+From the project folder in PowerShell:
 
 ```powershell
-git add .
-git commit -m "Describe your change"
-git push origin main
-.\deploy.ps1
+.\deploy.bat
+```
+
+This commits any local changes, pushes to GitHub, and updates the live server (pull, migrate, static files, restart). **It does not touch your products, categories, or colors** — add those in the admin.
+
+Optional flags:
+
+```powershell
+.\deploy.ps1 -Push -Message "Your commit message"
+.\deploy.ps1 -Status
 ```
 
 That SSHs into the droplet, runs `git pull`, migrates, collects static files, and restarts Gunicorn.
@@ -94,13 +100,26 @@ Check status:
 | A `www` | `209.38.211.102` |
 | MX / SPF / DKIM | unchanged (IONOS mail) |
 
-## Launch catalog
+## Launch catalog (5 demo products)
+
+No full WooCommerce import needed for the demo storefront:
 
 ```powershell
-python manage.py prepare_launch
+python manage.py seed_launch_catalog
 ```
 
-On the server this imports 10 products from safastyle.com (when reachable), optimizes images, and sets category photos.
+This loads 5 Safa products (linen sets, abayas, pants) with your real local photos.
+For the full 143-product catalog later, set `WOO_BASE_URL` in `.env` to your Bluehost temp URL and run `import_woocommerce --fresh`.
+
+### Colors & categories (one-time on live)
+
+Creates all swatch colors with hex codes, sizes, and category shells — no products:
+
+```bash
+ssh root@209.38.211.102
+cd /var/www/safastyle
+./venv/bin/python manage.py seed_store
+```
 
 ## Data entry (variations)
 

@@ -220,21 +220,32 @@ class Product(TimeStampedModel):
     def card_color_swatches(self):
         """Color swatches with image URLs for product gallery cards."""
         by_color = {}
-        fallback = None
+        defaults = []
         for img in self.images.all():
-            if img.color_id and img.color_id not in by_color:
+            if img.color_id and img.color_id not in by_color and img.image:
                 by_color[img.color_id] = img.image.url
-            elif not img.color_id and fallback is None and img.image:
-                fallback = img.image.url
-        primary = self.primary_image.image.url if self.primary_image and self.primary_image.image else fallback
+            elif not img.color_id and img.image:
+                defaults.append(img.image.url)
+        primary = (
+            self.primary_image.image.url
+            if self.primary_image and self.primary_image.image
+            else (defaults[0] if defaults else "")
+        )
         swatches = []
-        for color in self.available_colors.all():
+        for i, color in enumerate(self.available_colors.all()):
+            image = by_color.get(color.id)
+            if not image and defaults:
+                # Spread default gallery across colors when no per-color image yet
+                pool = defaults[1:] if len(defaults) > 1 else defaults
+                image = pool[i % len(pool)]
+            if not image:
+                image = primary
             swatches.append(
                 {
                     "id": color.id,
                     "hex": color.hex_code or "#cccccc",
                     "name": color.name,
-                    "image": by_color.get(color.id) or primary or "",
+                    "image": image or "",
                 }
             )
         return swatches

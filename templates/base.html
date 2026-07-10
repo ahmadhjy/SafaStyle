@@ -18,7 +18,7 @@
   <meta name="theme-color" content="#1c1526">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Outfit:wght@400;500;600&display=swap" rel="stylesheet">
   <link rel="icon" href="{% static 'img/favicon.ico' %}" sizes="any">
   <link rel="icon" type="image/png" sizes="32x32" href="{% static 'img/favicon-32.png' %}">
   <link rel="apple-touch-icon" href="{% static 'img/apple-touch-icon.png' %}">
@@ -61,8 +61,9 @@
 
       <div class="header-actions">
         <form class="header-search" action="{% url 'catalog:shop' %}" method="get" role="search">
-          <label class="sr-only" for="q">Search</label>
-          <input id="q" type="search" name="q" placeholder="Search" value="{{ request.GET.q }}">
+          <label class="sr-only" for="q">Search products</label>
+          <svg class="header-search-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+          <input id="q" type="search" name="q" placeholder="Search products…" value="{{ request.GET.q }}" autocomplete="off">
         </form>
         {% if user.is_authenticated %}
           <a class="icon-btn account-btn" href="{% url 'accounts:dashboard' %}" aria-label="My account" title="My account">
@@ -74,7 +75,10 @@
           </a>
         {% endif %}
         <a class="icon-btn cart-btn" href="{% url 'orders:cart' %}" aria-label="Bag">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M6 7h12l-1 12H7L6 7z"/><path d="M9 7a3 3 0 0 1 6 0"/></svg>
+          <svg class="bag-icon" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M8 10V8a4 4 0 0 1 8 0v2"/>
+            <path d="M5 10h14a1 1 0 0 1 1 1.1l-1.1 10a1 1 0 0 1-1 .9H6.1a1 1 0 0 1-1-.9L4 11.1A1 1 0 0 1 5 10z"/>
+          </svg>
           <span class="cart-meta" id="cart-meta">{{ cart_count }} / ${{ cart_total|floatformat:2 }}</span>
         </a>
         <button type="button" class="icon-btn menu-toggle" aria-label="Menu" data-menu-toggle>

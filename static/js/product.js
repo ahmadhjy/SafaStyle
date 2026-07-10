@@ -14,6 +14,11 @@
   const addForm = document.getElementById("add-form");
   const qtyInput = document.getElementById("quantity");
   const colorLabel = document.getElementById("color-label");
+  const lightbox = document.getElementById("gallery-lightbox");
+  const lightboxImg = document.getElementById("gallery-lightbox-img");
+  const zoomBtn = document.querySelector("[data-gallery-zoom-btn]");
+  const zoomClose = document.querySelector("[data-gallery-zoom-close]");
+  const galleryMain = document.querySelector("[data-gallery-zoom]");
 
   let selectedColor = null;
   let selectedSize = null;
@@ -23,8 +28,56 @@
 
   function imagesForColor(colorId) {
     const key = colorId ? String(colorId) : "default";
-    if (imagesByColor[key] && imagesByColor[key].length) return imagesByColor[key];
-    return imagesByColor.default || [];
+    const colorImgs = imagesByColor[key] || [];
+    const defaultImgs = imagesByColor.default || [];
+    const merged = [];
+    const seen = new Set();
+    [...colorImgs, ...defaultImgs, ...Object.values(imagesByColor).flat()].forEach((img) => {
+      if (!img || !img.url || seen.has(img.url)) return;
+      seen.add(img.url);
+      merged.push(img);
+    });
+    return merged;
+  }
+
+  function openZoom() {
+    if (!lightbox || !lightboxImg || !mainImg) return;
+    lightboxImg.src = mainImg.src;
+    lightboxImg.alt = mainImg.alt || "";
+    lightbox.hidden = false;
+    lightbox.classList.add("is-open");
+    document.body.style.overflow = "hidden";
+  }
+
+  function closeZoom() {
+    if (!lightbox) return;
+    lightbox.classList.remove("is-open");
+    lightbox.hidden = true;
+    document.body.style.overflow = "";
+  }
+
+  zoomBtn?.addEventListener("click", (e) => {
+    e.stopPropagation();
+    openZoom();
+  });
+  galleryMain?.addEventListener("click", () => openZoom());
+  zoomClose?.addEventListener("click", closeZoom);
+  lightbox?.addEventListener("click", (e) => {
+    if (e.target === lightbox) closeZoom();
+  });
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") closeZoom();
+  });
+
+  function bindThumbButtons() {
+    thumbs.querySelectorAll("button[data-thumb-url]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        mainImg.src = btn.dataset.thumbUrl;
+        thumbs.querySelectorAll("button").forEach((b) => b.classList.remove("is-active"));
+        btn.classList.add("is-active");
+        btn.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "center" });
+      });
+    });
   }
 
   function setGallery(colorId) {
@@ -32,16 +85,31 @@
     if (!imgs.length) return;
     mainImg.src = imgs[0].url;
     mainImg.alt = imgs[0].alt || "";
+    const serverThumbs = thumbs.querySelectorAll("button[data-thumb-url]");
+    if (serverThumbs.length) {
+      let activeSet = false;
+      serverThumbs.forEach((btn) => {
+        const isMatch = imgs.some((img) => img.url === btn.dataset.thumbUrl);
+        btn.classList.toggle("is-active", !activeSet && isMatch);
+        if (!activeSet && isMatch) activeSet = true;
+      });
+      if (!activeSet && serverThumbs[0]) {
+        serverThumbs[0].classList.add("is-active");
+        mainImg.src = serverThumbs[0].dataset.thumbUrl;
+      }
+      return;
+    }
     thumbs.innerHTML = "";
     imgs.forEach((img, idx) => {
       const btn = document.createElement("button");
       btn.type = "button";
       if (idx === 0) btn.classList.add("is-active");
-      btn.innerHTML = `<img src="${img.url}" alt="" loading="lazy" width="80" height="80">`;
+      btn.innerHTML = `<img src="${img.url}" alt="" loading="lazy" decoding="async" width="80" height="80">`;
       btn.addEventListener("click", () => {
         mainImg.src = img.url;
         thumbs.querySelectorAll("button").forEach((b) => b.classList.remove("is-active"));
         btn.classList.add("is-active");
+        btn.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "center" });
       });
       thumbs.appendChild(btn);
     });
@@ -145,6 +213,7 @@
   });
 
   // Defaults: first color (loads its gallery), first available size
+  bindThumbButtons();
   if (colorBtns.length) {
     colorBtns[0].click();
   } else {

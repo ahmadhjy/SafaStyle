@@ -18,6 +18,11 @@ echo "==> Django migrate + static"
 "${VENV}/bin/python" manage.py migrate --noinput
 "${VENV}/bin/python" manage.py collectstatic --noinput
 
+if [ -f .env ]; then
+  chown www-data:www-data .env
+  chmod 640 .env
+fi
+
 echo "==> Restart Gunicorn"
 sudo systemctl restart "${SERVICE}"
 

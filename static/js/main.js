@@ -8,6 +8,7 @@ document.addEventListener("DOMContentLoaded", () => {
       document.body.classList.toggle("nav-open");
       const open = document.body.classList.contains("nav-open");
       toggle.setAttribute("aria-expanded", open ? "true" : "false");
+      document.body.style.overflow = open ? "hidden" : "";
     });
   }
 

@@ -136,7 +136,7 @@ JAZZMIN_SETTINGS = {
     "site_title": "Safa Style Admin",
     "site_header": "Safa Style",
     "site_brand": "Safa Style",
-    "welcome_sign": "Product data entry — fast & simple",
+    "welcome_sign": "Welcome to Safa Style admin",
     "copyright": "Safa Style Boutique",
     "search_model": ["catalog.Product", "orders.Order"],
     "topmenu_links": [
@@ -204,6 +204,11 @@ CONTACT_EMAIL = os.environ.get("CONTACT_EMAIL", "info@safastyle.com")
 
 # SEO / production (override via .env on the droplet)
 SITE_URL = os.environ.get("SITE_URL", "https://safastyle.com")
+
+# WooCommerce import (Bluehost temp URL while DNS points at Django)
+WOO_BASE_URL = os.environ.get("WOO_BASE_URL", "https://safastyle.com").rstrip("/")
+WOO_CONSUMER_KEY = os.environ.get("WOO_CONSUMER_KEY", "")
+WOO_CONSUMER_SECRET = os.environ.get("WOO_CONSUMER_SECRET", "")
 
 if not DEBUG:
     CSRF_TRUSTED_ORIGINS = [

@@ -11,7 +11,9 @@
 
 param(
     [switch]$Setup,
-    [switch]$Status
+    [switch]$Status,
+    [switch]$Push,
+    [string]$Message = "Deploy update"
 )
 
 $ErrorActionPreference = "Stop"
@@ -39,20 +41,35 @@ if (-not $ip -or -not $user) {
     exit 1
 }
 
+$sshArgs = @("-o", "ConnectTimeout=15")
 Write-Host "Connecting to $target ..." -ForegroundColor Cyan
 
 if ($Setup) {
     Write-Host "Running one-time server setup (this takes a few minutes)..." -ForegroundColor Cyan
-    ssh $target "bash -s" < (Join-Path $Root "deploy\setup-server.sh")
+    ssh @sshArgs $target "bash -s" < (Join-Path $Root "deploy\setup-server.sh")
     exit $LASTEXITCODE
 }
 
 if ($Status) {
-    ssh $target "systemctl status gunicorn-safastyle --no-pager; echo '---'; curl -sI http://127.0.0.1/ | head -5"
+    ssh @sshArgs $target "systemctl status gunicorn-safastyle --no-pager; echo '---'; curl -sI https://safastyle.com/ | head -5"
     exit $LASTEXITCODE
 }
 
-# Normal deploy: push should already be on GitHub; server pulls and restarts.
+# Normal deploy: optional git push, then server pull + restart.
+if ($Push) {
+    Write-Host "Pushing to GitHub..." -ForegroundColor Cyan
+    git add -A
+    $dirty = git status --porcelain
+    if ($dirty) {
+        git commit -m $Message
+        if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+    } else {
+        Write-Host "No local changes to commit." -ForegroundColor DarkGray
+    }
+    git push origin main
+    if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+}
+
 Write-Host "Deploying latest main branch..." -ForegroundColor Cyan
-ssh $target "cd /var/www/safastyle && bash deploy/deploy.sh"
+ssh @sshArgs $target "cd /var/www/safastyle && bash deploy/deploy.sh"
 exit $LASTEXITCODE

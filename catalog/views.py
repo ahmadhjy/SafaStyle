@@ -1,3 +1,6 @@
+from pathlib import Path
+
+from django.conf import settings
 from django.db.models import Min, Prefetch, Q
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, render
@@ -6,25 +9,88 @@ from django.views.decorators.http import require_GET
 from .models import Category, Product, ProductImage, ProductVariation
 
 
+# Distinct hero backgrounds — filenames in media/library (not product primaries).
+HERO_SLIDE_FILES = (
+    ("ChatGPT-Image-Feb-14-2026-03_06_52-PM_bnqgroA.png", "Sets · New arrivals"),
+    ("ChatGPT-Image-Feb-14-2026-03_06_52-PM_u23FbVX.png", "Linen co-ords"),
+    ("IMG_1013-scaled.jpeg", "Dresses · Abayas"),
+)
+
+
 def _build_hero_slides(products, limit=3):
-    """Hero slides from real product photos — featured first, then newest."""
-    ranked = sorted(
-        [p for p in products if p.primary_image is not None],
-        key=lambda p: (not p.is_featured, -p.created_at.timestamp()),
-    )
+    """Hero slides from explicit library files so banners never repeat."""
     slides = []
-    for product in ranked[:limit]:
+    seen_urls: set[str] = set()
+    library = Path(settings.MEDIA_ROOT) / "library"
+
+    for filename, eyebrow in HERO_SLIDE_FILES[:limit]:
+        path = library / filename
+        if not path.is_file():
+            continue
+        url = f"{settings.MEDIA_URL}library/{filename}"
+        if url in seen_urls:
+            continue
+        seen_urls.add(url)
+        slides.append(
+            {
+                "image_url": url,
+                "eyebrow": eyebrow,
+                "url": "",
+                "name": eyebrow,
+            }
+        )
+
+    if len(slides) >= limit:
+        return slides[:limit]
+
+    # Fallback when library files are missing (e.g. fresh server before media upload).
+    by_slug = {p.slug: p for p in products if p.primary_image is not None}
+    curated_slugs = ["new-linen-set", "classy-linen-set", "embroidered-abaya"]
+    excluded_slugs = {"royal-gold-embroidered-abaya", "belted-wide-leg-pants"}
+
+    def add_slide(product):
+        img = product.primary_image
+        if not img or not img.image:
+            return
+        url = img.image.url
+        if url in seen_urls:
+            alt_img = product.images.exclude(pk=img.pk).order_by("sort_order").first()
+            if alt_img and alt_img.image:
+                url = alt_img.image.url
+        if url in seen_urls:
+            return
+        seen_urls.add(url)
         cats = list(product.categories.all())
         eyebrow = " · ".join(c.name for c in cats[:3]) or "New arrivals"
         slides.append(
             {
-                "image_url": product.primary_image.image.url,
+                "image_url": url,
                 "eyebrow": eyebrow,
                 "url": product.get_absolute_url(),
                 "name": product.name,
             }
         )
-    return slides
+
+    for slug in curated_slugs:
+        if len(slides) >= limit:
+            break
+        product = by_slug.get(slug)
+        if product:
+            add_slide(product)
+
+    if len(slides) < limit:
+        ranked = sorted(
+            [p for p in products if p.slug not in excluded_slugs and p.primary_image],
+            key=lambda p: (not p.is_featured, -p.created_at.timestamp()),
+        )
+        for product in ranked:
+            if len(slides) >= limit:
+                break
+            if any(s.get("name") == product.name for s in slides):
+                continue
+            add_slide(product)
+
+    return slides[:limit]
 
 
 def _category_image_map():
@@ -68,8 +134,13 @@ def home(request):
     for cat in featured_categories:
         cat.rep_image = (cat.image.url if cat.image else None) or cat_img.get(cat.id)
 
-    # Editorial banners: two generic category features with images
-    feature_categories = [c for c in featured_categories if getattr(c, "rep_image", None)][:2]
+    # Editorial banners: Sets + Dresses with distinct category images
+    editorial_slugs = ("sets", "dresses")
+    feature_categories = [
+        c for c in featured_categories if c.slug in editorial_slugs and getattr(c, "rep_image", None)
+    ][:2]
+    if len(feature_categories) < 2:
+        feature_categories = [c for c in featured_categories if getattr(c, "rep_image", None)][:2]
 
     return render(
         request,
@@ -215,11 +286,22 @@ def product_detail(request, slug):
         .prefetch_related("images", "available_colors", "available_sizes")
         .distinct()[:8]
     )
+    gallery_images = []
+    seen_urls: set[str] = set()
+    for img in product.images.all():
+        if not img.image:
+            continue
+        url = img.image.url
+        if url in seen_urls:
+            continue
+        seen_urls.add(url)
+        gallery_images.append(img)
     return render(
         request,
         "catalog/product_detail.html",
         {
             "product": product,
+            "gallery_images": gallery_images,
             "variations_json": variation_payload,
             "images_by_color": images_by_color,
             "related": related,
@@ -266,6 +348,17 @@ def quick_view(request, slug):
         images_by_color.setdefault(key, []).append(
             {"url": img.image.url, "alt": img.alt_text or product.name}
         )
+
+    def _preview_url(color_id):
+        key = str(color_id)
+        if key in images_by_color and images_by_color[key]:
+            return images_by_color[key][0]["url"]
+        swatches = product.card_color_swatches
+        for sw in swatches:
+            if sw["id"] == color_id:
+                return sw["image"]
+        return (images_by_color.get("default") or [{}])[0].get("url", "")
+
     return JsonResponse(
         {
             "ok": True,
@@ -278,7 +371,12 @@ def quick_view(request, slug):
             "has_sale": product.has_sale,
             "is_variable": product.is_variable,
             "colors": [
-                {"id": c.id, "name": c.name, "hex": c.hex_code or "#cccccc"}
+                {
+                    "id": c.id,
+                    "name": c.name,
+                    "hex": c.hex_code or "#cccccc",
+                    "preview_image": _preview_url(c.id),
+                }
                 for c in product.available_colors.all()
             ],
             "sizes": [
