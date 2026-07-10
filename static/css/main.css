@@ -1035,6 +1035,21 @@ body.nav-open .site-header .header-search input {
   color: var(--gold);
 }
 
+.product-media .badge {
+  position: absolute;
+  top: 0.75rem;
+  left: 0.75rem;
+  z-index: 3;
+  background: var(--magenta);
+  color: #fff;
+  font-size: 0.7rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 0.35rem 0.55rem;
+  font-weight: 600;
+  pointer-events: none;
+}
+
 .badge {
   position: absolute;
   top: 0.75rem;
@@ -2531,11 +2546,6 @@ body.nav-open .site-header .header-search input {
 .how-num--c1 { color: var(--magenta); }
 .how-num--c2 { color: var(--teal); }
 .how-num--c3 { color: var(--orange); }
-
-.badge {
-  background: var(--magenta);
-  color: #fff;
-}
 
 /* Colorful category tiles — accent gradients set via .category-tile--* */
 
