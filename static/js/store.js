@@ -324,38 +324,7 @@
   };
 
   // --- Wire up product cards ----------------------------------------------
-  function setCardImage(card, url, alt) {
-    if (!url) return;
-    const media = card.querySelector(".product-media");
-    const front = card.querySelector(".pc-img--front");
-    const back = card.querySelector(".pc-img--back");
-    if (!front) return;
-    if (media) {
-      media.classList.add("is-swapping");
-      setTimeout(() => media.classList.remove("is-swapping"), 260);
-    }
-    front.src = url;
-    front.alt = alt || card.dataset.name || "";
-    if (back && back.src === url) back.removeAttribute("src");
-  }
-
   document.addEventListener("click", (e) => {
-    const colorDot = e.target.closest(".pc-color-dot");
-    if (colorDot) {
-      e.preventDefault();
-      e.stopPropagation();
-      const card = colorDot.closest(".product-card");
-      if (!card) return;
-      card.querySelectorAll(".pc-color-dot").forEach((d) => {
-        d.classList.remove("is-active");
-        d.setAttribute("aria-pressed", "false");
-      });
-      colorDot.classList.add("is-active");
-      colorDot.setAttribute("aria-pressed", "true");
-      setCardImage(card, colorDot.dataset.image, colorDot.getAttribute("title"));
-      return;
-    }
-
     const quickBtn = e.target.closest("[data-quick]");
     const addBtn = e.target.closest("[data-add]");
     if (!quickBtn && !addBtn) return;

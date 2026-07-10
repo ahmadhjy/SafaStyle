@@ -113,7 +113,7 @@ STATIC_URL = "/static/"
 STATICFILES_DIRS = [BASE_DIR / "static"]
 STATIC_ROOT = BASE_DIR / "staticfiles"
 # Bump when CSS/JS changes so browsers fetch fresh files (nginx caches /static/ 30 days).
-STATIC_CACHE_VERSION = "7"
+STATIC_CACHE_VERSION = "8"
 STORAGES = {
     "default": {"BACKEND": "django.core.files.storage.FileSystemStorage"},
     "staticfiles": {
