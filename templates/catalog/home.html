@@ -158,24 +158,22 @@
   </div>
 </section>
 
-{% if featured_categories %}
+{% if home_categories %}
 <section class="section" style="padding-top:0">
   <div class="container">
     <div class="section-head reveal">
       <div>
         <p class="eyebrow eyebrow--purple">Browse</p>
         <h2>Shop by category</h2>
-        <p>Shop the styles customers love most.</p>
+        <p>Explore every collection — new pieces added weekly.</p>
       </div>
     </div>
     <div class="category-rail reveal-group">
-      {% for cat in featured_categories %}
-        <a class="category-tile reveal" href="{% url 'catalog:category' cat.slug %}">
-          {% if cat.rep_image %}
-            <img src="{{ cat.rep_image }}" alt="" loading="lazy">
-          {% else %}
-            <div class="category-tile__ph"></div>
-          {% endif %}
+      {% for cat in home_categories %}
+        <a class="category-tile category-tile--{{ cat.tile_accent }} reveal" href="{% url 'catalog:category' cat.slug %}">
+          <div class="category-tile__icon" aria-hidden="true">
+            <img src="{% static cat.icon_static %}" alt="" loading="lazy" decoding="async" width="64" height="64">
+          </div>
           <span>{{ cat.name }}</span>
         </a>
       {% endfor %}

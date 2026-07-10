@@ -4,6 +4,7 @@ from django.shortcuts import get_object_or_404, render
 from django.views.decorators.http import require_GET
 
 from .models import Category, Product, ProductImage, ProductVariation
+from .category_icons import accent_for_slug, icon_static_path
 
 
 # Homepage hero banners (wide ~2.4:1 PNGs in static/img/banners/).
@@ -79,6 +80,19 @@ def feature_editorial_boxes():
     return boxes
 
 
+def _home_categories():
+    """All active categories for the homepage rail (even when empty)."""
+    cats = list(
+        Category.objects.filter(is_active=True, parent__isnull=True).order_by(
+            "sort_order", "name"
+        )
+    )
+    for i, cat in enumerate(cats):
+        cat.icon_static = icon_static_path(cat.slug)
+        cat.tile_accent = accent_for_slug(cat.slug, i)
+    return cats
+
+
 def _category_image_map():
     """Representative image URL for each category (from its products)."""
     mapping = {}
@@ -111,14 +125,7 @@ def home(request):
     sale_items = [p for p in products if p.has_sale][:4]
     latest = sorted(products, key=lambda p: p.created_at, reverse=True)[:8]
 
-    cat_img = _category_image_map()
-    featured_categories = list(
-        Category.objects.filter(is_active=True, products__isnull=False)
-        .distinct()
-        .order_by("sort_order")[:8]
-    )
-    for cat in featured_categories:
-        cat.rep_image = (cat.image.url if cat.image else None) or cat_img.get(cat.id)
+    home_categories = _home_categories()
 
     # Editorial feature tiles (Sets + Bags) with dedicated artwork.
     feature_editorial = feature_editorial_boxes()
@@ -131,7 +138,7 @@ def home(request):
             "feature_editorial": feature_editorial,
             "sale_items": sale_items,
             "latest": latest,
-            "featured_categories": featured_categories,
+            "home_categories": home_categories,
         },
     )
 

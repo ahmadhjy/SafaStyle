@@ -10,12 +10,12 @@ Usage:
 
 from __future__ import annotations
 
-from django.core.files.base import ContentFile
+from django.conf import settings
 from django.core.management.base import BaseCommand
 from django.db import transaction
 from django.utils.text import slugify
 
-from catalog.category_art import render_category_image
+from catalog.category_icons import accent_for_slug, icon_static_path, write_category_icons
 from catalog.models import Category, Color, Product, ProductImage, ProductVariation, Size
 
 # Categories from the original Safa Style WooCommerce store.
@@ -248,10 +248,14 @@ class Command(BaseCommand):
 
             if skip_images:
                 continue
-            data = render_category_image(slug, name)
-            filename = f"{slug}.jpg"
-            category.image.save(filename, ContentFile(data), save=True)
-            img_assigned += 1
+            if category.image:
+                category.image.delete(save=False)
+                category.save(update_fields=["image"])
+
+        if not skip_images:
+            slugs = [slug for _, slug in CATEGORY_DEFS]
+            img_assigned = write_category_icons(settings.BASE_DIR / "static", slugs)
+            self.stdout.write(f"Wrote {img_assigned} SVG icon(s) to static/img/category-icons/")
 
         # Deactivate any leftover non-canonical categories when products were wiped.
         if not Product.objects.exists():

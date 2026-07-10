@@ -1097,30 +1097,72 @@ body.nav-open .site-header .header-search input {
   flex: 0 0 min(42vw, 200px);
   aspect-ratio: 3 / 4;
   overflow: hidden;
-  background: #111;
+  background: var(--ink);
   color: #fff;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  transition: transform 0.35s var(--ease), box-shadow 0.35s var(--ease);
 }
 
-.category-tile img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  opacity: 0.7;
-  transition: transform 0.7s var(--ease), opacity 0.3s ease;
+.category-tile--gold {
+  background: linear-gradient(165deg, #f7ebcf 0%, #e0a92e 100%);
 }
 
-.category-tile:hover img {
-  transform: scale(1.06);
-  opacity: 0.55;
+.category-tile--magenta {
+  background: linear-gradient(165deg, #f9d4e8 0%, #e23d8b 100%);
+}
+
+.category-tile--teal {
+  background: linear-gradient(165deg, #d4f5ef 0%, #2fbfa8 100%);
+}
+
+.category-tile--orange {
+  background: linear-gradient(165deg, #fde4d8 0%, #f26b3a 100%);
+}
+
+.category-tile--purple {
+  background: linear-gradient(165deg, #ecd8eb 0%, #9b4f96 100%);
+}
+
+.category-tile__icon {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem 1rem 3.75rem;
+}
+
+.category-tile__icon img {
+  width: 64px;
+  height: 64px;
+  object-fit: contain;
+  opacity: 1;
+  filter: drop-shadow(0 8px 18px rgba(28, 21, 38, 0.18));
+  transition: transform 0.45s var(--ease);
+}
+
+.category-tile:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 16px 36px rgba(28, 21, 38, 0.16);
+}
+
+.category-tile:hover .category-tile__icon img {
+  transform: scale(1.08);
 }
 
 .category-tile span {
-  position: absolute;
-  left: 1rem;
-  bottom: 1rem;
+  position: relative;
+  z-index: 2;
+  width: 100%;
+  padding: 0 1rem 1rem;
   font-family: var(--font-display);
-  font-size: 1.6rem;
-  z-index: 1;
+  font-size: 1.45rem;
+  line-height: 1.05;
+  text-align: center;
+  text-shadow: 0 1px 10px rgba(28, 21, 38, 0.22);
 }
 
 .category-tile__ph {
@@ -2495,30 +2537,7 @@ body.nav-open .site-header .header-search input {
   color: #fff;
 }
 
-/* Colorful category tiles */
-.category-tile::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  z-index: 1;
-  opacity: 0.55;
-  mix-blend-mode: multiply;
-  transition: opacity 0.4s var(--ease);
-}
-
-.category-tile:hover::after {
-  opacity: 0.3;
-}
-
-.category-rail .category-tile:nth-child(5n + 1)::after { background: linear-gradient(160deg, transparent 40%, var(--magenta)); }
-.category-rail .category-tile:nth-child(5n + 2)::after { background: linear-gradient(160deg, transparent 40%, var(--teal)); }
-.category-rail .category-tile:nth-child(5n + 3)::after { background: linear-gradient(160deg, transparent 40%, var(--orange)); }
-.category-rail .category-tile:nth-child(5n + 4)::after { background: linear-gradient(160deg, transparent 40%, var(--purple)); }
-.category-rail .category-tile:nth-child(5n + 5)::after { background: linear-gradient(160deg, transparent 40%, var(--gold)); }
-
-.category-tile span {
-  z-index: 2;
-}
+/* Colorful category tiles — accent gradients set via .category-tile--* */
 
 /* Colorful focus + selection */
 ::selection {
