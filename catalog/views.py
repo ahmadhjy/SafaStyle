@@ -27,7 +27,7 @@ HERO_BANNER_SLIDES = (
         "image": "img/banners/banner3.png",
         "width": 1973,
         "height": 797,
-        "eyebrow": "Modest Fashion · Abayas",
+        "eyebrow": "Accessories",
         "object_position": "center center",
     },
 )
