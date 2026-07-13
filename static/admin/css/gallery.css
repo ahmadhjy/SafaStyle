@@ -95,6 +95,23 @@
 
 .ss-modal-body { padding: 18px 20px; overflow: auto; flex: 1; }
 
+.ss-lib-search { margin-bottom: 14px; }
+.ss-lib-search-input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 10px 14px;
+  border: 1px solid #d8d8d8;
+  border-radius: 8px;
+  font-size: 14px;
+  background: #fafafa;
+}
+.ss-lib-search-input:focus {
+  outline: none;
+  border-color: #d4a017;
+  background: #fff;
+  box-shadow: 0 0 0 3px rgba(212, 160, 23, 0.15);
+}
+
 .ss-lib-grid {
   display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 10px;
 }

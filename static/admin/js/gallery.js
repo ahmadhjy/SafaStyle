@@ -38,6 +38,7 @@
     function sync() {
       input.value = JSON.stringify(items);
       emptyMsg.style.display = items.length ? "none" : "";
+      input.dispatchEvent(new Event("input", { bubbles: true }));
     }
 
     function colorOptions(selected) {
@@ -172,6 +173,14 @@
       modal.appendChild(tabs);
 
       var bodyLib = el("div", "ss-modal-body");
+      var searchWrap = el("div", "ss-lib-search");
+      var searchInput = el("input");
+      searchInput.type = "search";
+      searchInput.className = "ss-lib-search-input";
+      searchInput.placeholder = "Search by file name or title…";
+      searchInput.setAttribute("autocomplete", "off");
+      searchWrap.appendChild(searchInput);
+      bodyLib.appendChild(searchWrap);
       var libGrid = el("div", "ss-lib-grid");
       bodyLib.appendChild(libGrid);
 
@@ -212,33 +221,45 @@
         count.textContent = n + " selected";
       }
 
-      function loadLibrary() {
+      var searchTimer = null;
+
+      function renderLibraryCells(assets) {
+        libGrid.innerHTML = "";
+        if (!assets.length) {
+          var query = searchInput.value.trim();
+          libGrid.innerHTML = query
+            ? "<p class='ss-lib-loading'>No images match “" + query + "”.</p>"
+            : "<p class='ss-lib-loading'>Library is empty. Use “Upload files”.</p>";
+          return;
+        }
+        assets.forEach(function (a) {
+          var cell = el("button", "ss-lib-cell");
+          cell.type = "button";
+          if (a.title) cell.title = a.title;
+          cell.appendChild(el("img", null)).src = a.url;
+          if (selected[a.id]) cell.classList.add("is-selected");
+          cell.addEventListener("click", function () {
+            if (selected[a.id]) {
+              delete selected[a.id];
+              cell.classList.remove("is-selected");
+            } else {
+              selected[a.id] = a;
+              cell.classList.add("is-selected");
+            }
+            updateCount();
+          });
+          libGrid.appendChild(cell);
+        });
+      }
+
+      function loadLibrary(query) {
+        var q = (query || "").trim();
         libGrid.innerHTML = "<p class='ss-lib-loading'>Loading…</p>";
-        fetch(libraryUrl, { credentials: "same-origin" })
+        var url = libraryUrl + (q ? "?q=" + encodeURIComponent(q) : "");
+        fetch(url, { credentials: "same-origin" })
           .then(function (r) { return r.json(); })
           .then(function (data) {
-            libGrid.innerHTML = "";
-            if (!data.assets.length) {
-              libGrid.innerHTML =
-                "<p class='ss-lib-loading'>Library is empty. Use “Upload files”.</p>";
-              return;
-            }
-            data.assets.forEach(function (a) {
-              var cell = el("button", "ss-lib-cell");
-              cell.type = "button";
-              cell.appendChild(el("img", null)).src = a.url;
-              cell.addEventListener("click", function () {
-                if (selected[a.id]) {
-                  delete selected[a.id];
-                  cell.classList.remove("is-selected");
-                } else {
-                  selected[a.id] = a;
-                  cell.classList.add("is-selected");
-                }
-                updateCount();
-              });
-              libGrid.appendChild(cell);
-            });
+            renderLibraryCells(data.assets || []);
           })
           .catch(function () {
             libGrid.innerHTML = "<p class='ss-lib-loading'>Failed to load library.</p>";
@@ -276,11 +297,19 @@
           });
       }
 
+      searchInput.addEventListener("input", function () {
+        clearTimeout(searchTimer);
+        searchTimer = setTimeout(function () {
+          loadLibrary(searchInput.value);
+        }, 280);
+      });
+
       tabLib.addEventListener("click", function () {
         tabLib.classList.add("is-active");
         tabUp.classList.remove("is-active");
         bodyLib.style.display = "";
         bodyUp.style.display = "none";
+        searchInput.focus();
       });
       tabUp.addEventListener("click", function () {
         tabUp.classList.add("is-active");

@@ -2,6 +2,7 @@ import json
 
 from django import forms
 from django.contrib import admin, messages
+from django.db.models import Q
 from django.http import JsonResponse
 from django.urls import path, reverse
 from django.utils.html import format_html
@@ -112,7 +113,7 @@ class ProductAdminForm(forms.ModelForm):
 class MediaAssetAdmin(admin.ModelAdmin):
     list_display = ("thumb", "title", "created_at")
     list_display_links = ("thumb", "title")
-    search_fields = ("title",)
+    search_fields = ("title", "file")
     ordering = ("-created_at",)
 
     @admin.display(description="")
@@ -305,7 +306,9 @@ class ProductAdmin(admin.ModelAdmin):
         q = request.GET.get("q", "").strip()
         assets = MediaAsset.objects.all()
         if q:
-            assets = assets.filter(title__icontains=q)
+            assets = assets.filter(
+                Q(title__icontains=q) | Q(file__icontains=q)
+            )
         assets = assets[:600]
         return JsonResponse(
             {
