@@ -191,9 +191,15 @@
       }
 
       this.setImage(null, null);
-      // Auto-select the first color so gallery + price populate.
-      if (p.colors.length) this.selectColor(p.colors[0]);
-      this.update();
+      if (p.colors.length) {
+        this.selectColor(p.colors[0]);
+      } else if (p.sizes.length) {
+        this.syncSizes();
+        this.selectFirstAvailableSize();
+        this.update();
+      } else {
+        this.update();
+      }
 
       const addBtn = document.getElementById("qv-add");
       addBtn.onclick = () => this.add();
@@ -223,6 +229,14 @@
       }
     },
 
+    selectFirstAvailableSize() {
+      const buttons = [...document.querySelectorAll("#qv-sizes .qv-size")].filter(
+        (b) => !b.disabled
+      );
+      if (!buttons.length) return;
+      this.selectSize(buttons[0]._size, buttons[0]);
+    },
+
     selectColor(c) {
       this.state.color = c.id;
       document.getElementById("qv-color-name").textContent = `— ${c.name}`;
@@ -231,6 +245,7 @@
       );
       this.setImage(c.id, c);
       this.syncSizes();
+      this.selectFirstAvailableSize();
       this.update();
     },
 
@@ -306,7 +321,15 @@
     },
 
     add() {
-      const { product, color, size } = this.state;
+      const { product, color, size, needColor, needSize } = this.state;
+      if (needSize && size == null) {
+        toast("Please select a size.", { error: true });
+        return;
+      }
+      if (needColor && color == null) {
+        toast("Please select a color.", { error: true });
+        return;
+      }
       const addBtn = document.getElementById("qv-add");
       addBtn.disabled = true;
       addToBag({

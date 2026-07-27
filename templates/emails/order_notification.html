@@ -30,7 +30,7 @@
                     <div style="font-weight:700;color:#52606d;margin-bottom:6px;">Delivery</div>
                     {{ order.street_address }}{% if order.apartment %}, {{ order.apartment }}{% endif %}<br>
                     {{ order.city }}{% if order.postcode %} {{ order.postcode }}{% endif %}<br>
-                    {{ order.country }}
+                    {% if order.governorate %}{{ order.governorate.name }} · {% endif %}{{ order.country }}
                   </td>
                 </tr>
               </table>
@@ -58,6 +58,16 @@
                   <td align="right" style="padding:11px 0;border-bottom:1px solid #eef1f5;font-size:14px;font-weight:600;">${{ item.line_total }}</td>
                 </tr>
                 {% endfor %}
+                <tr>
+                  <td colspan="2" align="right" style="padding:10px 0 0;font-size:14px;">Subtotal</td>
+                  <td align="right" style="padding:10px 0 0;font-size:14px;">${{ order.subtotal }}</td>
+                </tr>
+                {% if order.delivery_fee %}
+                <tr>
+                  <td colspan="2" align="right" style="padding:6px 0 0;font-size:14px;">Delivery</td>
+                  <td align="right" style="padding:6px 0 0;font-size:14px;">${{ order.delivery_fee }}</td>
+                </tr>
+                {% endif %}
                 <tr>
                   <td colspan="2" align="right" style="padding:14px 0 0;font-size:15px;font-weight:700;">Total</td>
                   <td align="right" style="padding:14px 0 0;font-size:17px;font-weight:800;color:#b8860b;">${{ order.total }}</td>

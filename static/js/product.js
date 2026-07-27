@@ -115,6 +115,15 @@
     });
   }
 
+  function selectFirstAvailableSize() {
+    if (!sizeBtns.length) return;
+    const first = sizeBtns.find((b) => !b.disabled) || sizeBtns[0];
+    if (!first || first.disabled) return;
+    selectedSize = Number(first.dataset.sizeId);
+    sizeBtns.forEach((b) => b.classList.remove("is-active"));
+    first.classList.add("is-active");
+  }
+
   function findVariation() {
     return variations.find((v) => {
       const colorOk = selectedColor ? v.color_id === selectedColor : v.color_id == null || !colorBtns.length;
@@ -198,6 +207,7 @@
       if (colorLabel) colorLabel.textContent = `— ${btn.title}`;
       setGallery(selectedColor);
       syncSizeAvailability();
+      selectFirstAvailableSize();
       updateUI();
     });
   });
@@ -218,11 +228,25 @@
     colorBtns[0].click();
   } else {
     setGallery(null);
-    if (sizeBtns.length) sizeBtns[0].click();
-    else updateUI();
+    if (sizeBtns.length) {
+      selectFirstAvailableSize();
+      updateUI();
+    } else {
+      updateUI();
+    }
   }
-  if (colorBtns.length && sizeBtns.length) {
-    const firstSize = sizeBtns.find((b) => !b.disabled) || sizeBtns[0];
-    if (firstSize) firstSize.click();
-  }
+
+  addForm?.addEventListener("submit", (e) => {
+    if (addBtn.disabled) {
+      e.preventDefault();
+      if (sizeBtns.length && selectedSize == null) {
+        stockNote.textContent = "Please select a size";
+      } else if (colorBtns.length && selectedColor == null) {
+        stockNote.textContent = "Please select a color";
+      } else {
+        stockNote.textContent = "Select color & size";
+      }
+      stockNote.className = "stock-note";
+    }
+  });
 })();

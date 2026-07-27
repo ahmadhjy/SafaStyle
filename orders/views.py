@@ -10,7 +10,7 @@ from catalog.models import Product, ProductVariation
 from .cart import Cart
 from .emails import send_order_emails
 from .forms import CheckoutForm
-from .models import OrderItem
+from .models import Governorate, OrderItem
 
 
 def _is_ajax(request):
@@ -78,11 +78,23 @@ def cart_quick_add(request):
     qs = product.variations.filter(is_active=True)
     if color_id:
         qs = qs.filter(color_id=color_id)
+    elif product.available_colors.count() == 1:
+        qs = qs.filter(color_id=product.available_colors.first().pk)
     if size_id:
         qs = qs.filter(size_id=size_id)
+    elif product.available_sizes.count() == 1:
+        qs = qs.filter(size_id=product.available_sizes.first().pk)
     variation = qs.first()
 
     if not variation:
+        if product.available_sizes.exists() and not size_id:
+            return _cart_json(
+                cart, ok=False, error="Please select a size before adding to your bag."
+            )
+        if product.available_colors.exists() and not color_id:
+            return _cart_json(
+                cart, ok=False, error="Please select a color before adding to your bag."
+            )
         return _cart_json(cart, ok=False, error="Please choose the available options.")
     ok = cart.add(variation, quantity=qty)
     return _cart_json(
@@ -132,7 +144,13 @@ def checkout(request):
             if request.user.is_authenticated:
                 order.user = request.user
             order.subtotal = cart.subtotal
-            order.total = cart.subtotal
+            delivery_fee = Decimal("0")
+            if order.country == "Lebanon" and order.governorate:
+                delivery_fee = order.governorate.delivery_fee
+            else:
+                order.governorate = None
+            order.delivery_fee = delivery_fee
+            order.total = cart.subtotal + delivery_fee
             order.payment_method = "cod"
             order.save()
             if profile is not None:
@@ -159,10 +177,18 @@ def checkout(request):
         initial = profile.checkout_initial() if profile is not None else None
         form = CheckoutForm(initial=initial)
 
+    governorates = list(
+        Governorate.objects.filter(is_active=True).values("id", "name", "delivery_fee")
+    )
+
     return render(
         request,
         "orders/checkout.html",
-        {"form": form, "cart": cart},
+        {
+            "form": form,
+            "cart": cart,
+            "governorates_json": governorates,
+        },
     )
 
 

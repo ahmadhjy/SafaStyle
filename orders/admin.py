@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import Order, OrderItem
+from .models import Governorate, Order, OrderItem
 
 
 class OrderItemInline(admin.TabularInline):
@@ -17,6 +17,14 @@ class OrderItemInline(admin.TabularInline):
     can_delete = False
 
 
+@admin.register(Governorate)
+class GovernorateAdmin(admin.ModelAdmin):
+    list_display = ("name", "delivery_fee", "sort_order", "is_active")
+    list_editable = ("delivery_fee", "sort_order", "is_active")
+    search_fields = ("name",)
+    ordering = ("sort_order", "name")
+
+
 @admin.register(Order)
 class OrderAdmin(admin.ModelAdmin):
     list_display = (
@@ -24,11 +32,12 @@ class OrderAdmin(admin.ModelAdmin):
         "full_name",
         "phone",
         "city",
+        "governorate",
         "status",
         "total",
         "created_at",
     )
-    list_filter = ("status", "payment_method", "created_at")
+    list_filter = ("status", "payment_method", "created_at", "governorate")
     search_fields = (
         "order_number",
         "first_name",
@@ -37,7 +46,14 @@ class OrderAdmin(admin.ModelAdmin):
         "email",
     )
     list_editable = ("status",)
-    readonly_fields = ("order_number", "created_at", "updated_at", "subtotal", "total")
+    readonly_fields = (
+        "order_number",
+        "created_at",
+        "updated_at",
+        "subtotal",
+        "delivery_fee",
+        "total",
+    )
     raw_id_fields = ("user",)
     inlines = [OrderItemInline]
     fieldsets = (
@@ -59,6 +75,7 @@ class OrderAdmin(admin.ModelAdmin):
             {
                 "fields": (
                     "country",
+                    "governorate",
                     "street_address",
                     "apartment",
                     "city",
@@ -66,5 +83,8 @@ class OrderAdmin(admin.ModelAdmin):
                 )
             },
         ),
-        ("Notes & totals", {"fields": ("order_notes", "subtotal", "total")}),
+        (
+            "Notes & totals",
+            {"fields": ("order_notes", "subtotal", "delivery_fee", "total")},
+        ),
     )

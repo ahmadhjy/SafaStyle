@@ -51,6 +51,16 @@
                 </tr>
                 {% endfor %}
                 <tr>
+                  <td align="right" style="padding:12px 0 0;font-size:14px;">Subtotal</td>
+                  <td align="right" style="padding:12px 0 0;font-size:14px;font-weight:600;">${{ order.subtotal }}</td>
+                </tr>
+                {% if order.delivery_fee %}
+                <tr>
+                  <td align="right" style="padding:6px 0 0;font-size:14px;">Delivery</td>
+                  <td align="right" style="padding:6px 0 0;font-size:14px;font-weight:600;">${{ order.delivery_fee }}</td>
+                </tr>
+                {% endif %}
+                <tr>
                   <td align="right" style="padding:16px 0 0;font-size:16px;font-weight:700;">Total</td>
                   <td align="right" style="padding:16px 0 0;font-size:18px;font-weight:800;color:#b8860b;">${{ order.total }}</td>
                 </tr>
@@ -60,7 +70,8 @@
                 <div style="font-weight:700;margin-bottom:6px;">Delivery to</div>
                 {{ order.full_name }}<br>
                 {{ order.street_address }}{% if order.apartment %}, {{ order.apartment }}{% endif %}<br>
-                {{ order.city }}{% if order.postcode %} {{ order.postcode }}{% endif %}, {{ order.country }}<br>
+                {{ order.city }}{% if order.postcode %} {{ order.postcode }}{% endif %}<br>
+                {% if order.governorate %}{{ order.governorate.name }} · {% endif %}{{ order.country }}<br>
                 Phone: {{ order.phone }}
                 {% if order.order_notes %}<br><br><strong>Notes:</strong> {{ order.order_notes }}{% endif %}
               </div>

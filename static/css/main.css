@@ -1726,6 +1726,12 @@ body.nav-open .site-header .header-search input {
   gap: 1rem;
 }
 
+.field-error {
+  margin: 0.35rem 0 0;
+  font-size: 0.85rem;
+  color: #b42318;
+}
+
 .form-grid .full {
   grid-column: 1 / -1;
 }

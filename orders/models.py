@@ -39,6 +39,17 @@ class Order(models.Model):
     email = models.EmailField(blank=True)
     order_notes = models.TextField(blank=True)
 
+    governorate = models.ForeignKey(
+        "Governorate",
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="orders",
+    )
+    delivery_fee = models.DecimalField(
+        max_digits=8, decimal_places=2, default=Decimal("0")
+    )
+
     payment_method = models.CharField(
         max_length=40, default="cod", help_text="Cash on delivery"
     )
@@ -91,3 +102,22 @@ class OrderItem(models.Model):
 
     def __str__(self):
         return f"{self.product_name} × {self.quantity}"
+
+
+class Governorate(models.Model):
+    """Lebanon delivery zones — fee applied at checkout when country is Lebanon."""
+
+    name = models.CharField(max_length=120, unique=True)
+    delivery_fee = models.DecimalField(
+        max_digits=8, decimal_places=2, default=Decimal("5.00")
+    )
+    sort_order = models.PositiveIntegerField(default=0)
+    is_active = models.BooleanField(default=True)
+
+    class Meta:
+        ordering = ["sort_order", "name"]
+        verbose_name = "Governorate"
+        verbose_name_plural = "Governorates"
+
+    def __str__(self):
+        return self.name

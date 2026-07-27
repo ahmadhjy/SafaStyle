@@ -113,7 +113,7 @@ STATIC_URL = "/static/"
 STATICFILES_DIRS = [BASE_DIR / "static"]
 STATIC_ROOT = BASE_DIR / "staticfiles"
 # Bump when CSS/JS changes so browsers fetch fresh files (nginx caches /static/ 30 days).
-STATIC_CACHE_VERSION = "16"
+STATIC_CACHE_VERSION = "17"
 STORAGES = {
     "default": {"BACKEND": "django.core.files.storage.FileSystemStorage"},
     "staticfiles": {
@@ -152,6 +152,7 @@ JAZZMIN_SETTINGS = {
         "catalog.Color": "fas fa-palette",
         "catalog.Size": "fas fa-ruler",
         "orders.Order": "fas fa-shopping-bag",
+        "orders.Governorate": "fas fa-map-marked-alt",
         "pages.SitePage": "fas fa-file-alt",
         "pages.SiteSetting": "fas fa-cog",
     },

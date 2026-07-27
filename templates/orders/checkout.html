@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load static %}
 
 {% block title %}Checkout — {{ site.store_name }}{% endblock %}
 
@@ -6,7 +7,7 @@
 <div class="container checkout-grid">
   <div class="panel">
     <h1>Billing details</h1>
-    <form method="post" novalidate>
+    <form method="post" novalidate id="checkout-form">
       {% csrf_token %}
       <div class="form-grid">
         <div class="field">
@@ -24,6 +25,13 @@
         <div class="field full">
           <label for="id_country">Country / Region *</label>
           {{ form.country }}
+        </div>
+        <div class="field full" id="governorate-field" hidden>
+          <label for="id_governorate">Governorate *</label>
+          {{ form.governorate }}
+          {% if form.governorate.errors %}
+            <p class="field-error">{{ form.governorate.errors.0 }}</p>
+          {% endif %}
         </div>
         <div class="field full">
           <label for="id_street_address">Street address *</label>
@@ -68,9 +76,13 @@
         <span>${{ item.total }}</span>
       </div>
     {% endfor %}
+    <div class="order-line" id="delivery-line" hidden>
+      <span>Delivery</span>
+      <span id="delivery-amount">$0.00</span>
+    </div>
     <div class="order-total">
       <span>Total</span>
-      <strong>${{ cart.subtotal }}</strong>
+      <strong id="checkout-total">${{ cart.subtotal }}</strong>
     </div>
     <div class="payment-note">
       <strong>Cash on delivery</strong><br>
@@ -82,4 +94,12 @@
     </p>
   </aside>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+{{ governorates_json|json_script:"checkout-governorates" }}
+<script>
+  window.CHECKOUT_SUBTOTAL = Number("{{ cart.subtotal }}");
+</script>
+<script src="{% static 'js/checkout.js' %}?v={{ static_version }}" defer></script>
 {% endblock %}

@@ -1,7 +1,7 @@
 from django import forms
 
 from .countries import COUNTRY_CHOICES
-from .models import Order
+from .models import Governorate, Order
 
 
 class CheckoutForm(forms.ModelForm):
@@ -12,6 +12,7 @@ class CheckoutForm(forms.ModelForm):
             "last_name",
             "company",
             "country",
+            "governorate",
             "street_address",
             "apartment",
             "city",
@@ -25,6 +26,7 @@ class CheckoutForm(forms.ModelForm):
             "last_name": forms.TextInput(attrs={"placeholder": "Last name", "required": True}),
             "company": forms.TextInput(attrs={"placeholder": "Company name (optional)"}),
             "country": forms.Select(choices=COUNTRY_CHOICES),
+            "governorate": forms.Select(),
             "street_address": forms.TextInput(
                 attrs={"placeholder": "House number and street name"}
             ),
@@ -45,6 +47,10 @@ class CheckoutForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.fields["governorate"].queryset = Governorate.objects.filter(is_active=True)
+        self.fields["governorate"].empty_label = "Select governorate"
+        self.fields["governorate"].required = False
+
         self.fields["first_name"].required = True
         self.fields["last_name"].required = True
         self.fields["street_address"].required = True
@@ -59,3 +65,17 @@ class CheckoutForm(forms.ModelForm):
             field.widget.attrs.setdefault("class", "field-input")
             if field.required:
                 field.widget.attrs["required"] = True
+
+    def clean(self):
+        cleaned = super().clean()
+        country = (cleaned.get("country") or "").strip()
+        governorate = cleaned.get("governorate")
+        if country == "Lebanon":
+            if not governorate:
+                self.add_error(
+                    "governorate",
+                    "Please select your governorate for delivery in Lebanon.",
+                )
+        else:
+            cleaned["governorate"] = None
+        return cleaned
