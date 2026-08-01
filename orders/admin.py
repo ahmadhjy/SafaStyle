@@ -53,23 +53,7 @@ class OrderItemInline(admin.TabularInline):
         variation = obj.variation
         if not variation or not variation.product_id:
             return ""
-        product = variation.product
-        images = list(product.images.all())
-        # Prefer the image for this color, then primary / default gallery.
-        if variation.color_id:
-            for img in images:
-                if img.color_id == variation.color_id and img.image:
-                    return img.image.url
-        for img in images:
-            if img.is_primary and img.image:
-                return img.image.url
-        for img in images:
-            if img.color_id is None and img.image:
-                return img.image.url
-        for img in images:
-            if img.image:
-                return img.image.url
-        return ""
+        return variation.product.image_url_for_color(variation.color)
 
 
 @admin.register(Governorate)

@@ -281,6 +281,24 @@ class Product(TimeStampedModel):
             return qs
         return self.images.filter(color__isnull=True).order_by("sort_order")
 
+    def image_url_for_color(self, color):
+        """Best image URL for a variation's color.
+
+        Priority: a photo assigned to this color, then the default gallery
+        (primary / color-less images), then any product image. Returns ""
+        only when the product has no images at all — so the cart, order items
+        and admin never show a blank when a single default photo exists.
+        """
+        if color is not None:
+            color_id = getattr(color, "id", color)
+            for img in self.images.all():
+                if img.color_id == color_id and img.image:
+                    return img.image.url
+        primary = self.primary_image
+        if primary and primary.image:
+            return primary.image.url
+        return ""
+
     def _variation_sku(self, color, size):
         base = self.sku or (f"SS-{self.pk:05d}" if self.pk else "SS")
         parts = [base]

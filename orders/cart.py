@@ -28,13 +28,7 @@ class Cart:
             "name": variation.product.name,
             "label": variation.label(),
             "sku": variation.sku or "",
-            "image": (
-                variation.product.images_for_color(variation.color)
-                .first()
-                .image.url
-                if variation.product.images_for_color(variation.color).exists()
-                else ""
-            ),
+            "image": variation.product.image_url_for_color(variation.color),
         }
         self.save()
         return True
@@ -67,6 +61,9 @@ class Cart:
             item["variation"] = variation
             item["price"] = Decimal(item["price"])
             item["total"] = item["price"] * item["qty"]
+            # Always resolve the image fresh so older sessions and products
+            # that only have a default gallery photo never show a blank.
+            item["image"] = variation.product.image_url_for_color(variation.color)
             yield item
 
     def __len__(self):
