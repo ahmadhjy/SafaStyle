@@ -324,10 +324,34 @@ class ProductAdmin(admin.ModelAdmin):
         if request.method != "POST":
             return JsonResponse({"error": "POST required"}, status=405)
         files = request.FILES.getlist("files")
+        if not files:
+            return JsonResponse({"error": "No files received."}, status=400)
         out = []
-        for f in files:
-            asset = MediaAsset.objects.create(file=f)
-            out.append({"id": asset.id, "url": asset.file.url, "title": asset.title})
+        try:
+            for f in files:
+                asset = MediaAsset.objects.create(file=f)
+                out.append(
+                    {"id": asset.id, "url": asset.file.url, "title": asset.title}
+                )
+        except OSError as exc:
+            return JsonResponse(
+                {
+                    "error": (
+                        "Could not save the image on the server. "
+                        "Please try again or contact support."
+                    ),
+                    "detail": str(exc),
+                },
+                status=500,
+            )
+        except Exception as exc:  # noqa: BLE001 — surface upload failures to admin UI
+            return JsonResponse(
+                {
+                    "error": "Upload failed. Please try a JPG or PNG under 10 MB.",
+                    "detail": str(exc),
+                },
+                status=500,
+            )
         return JsonResponse({"assets": out})
 
     # -- save: sync gallery --------------------------------------------------

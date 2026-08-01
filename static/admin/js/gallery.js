@@ -280,11 +280,20 @@
           headers: { "X-CSRFToken": csrfToken() },
           body: fd,
         })
-          .then(function (r) { return r.json(); })
-          .then(function (data) {
+          .then(function (r) {
+            return r.json().then(function (data) {
+              return { ok: r.ok, status: r.status, data: data };
+            });
+          })
+          .then(function (res) {
             drop.classList.remove("is-busy");
+            if (!res.ok) {
+              drop.querySelector("strong").textContent =
+                (res.data && res.data.error) || "Upload failed — retry";
+              return;
+            }
             drop.querySelector("strong").textContent = "Drop files here";
-            (data.assets || []).forEach(function (a) {
+            (res.data.assets || []).forEach(function (a) {
               selected[a.id] = a;
             });
             updateCount();

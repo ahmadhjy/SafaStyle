@@ -23,6 +23,12 @@ if [ -f .env ]; then
   chmod 640 .env
 fi
 
+# Keep media writable by Gunicorn (www-data). Root-owned month folders
+# from manual scripts break admin uploads.
+if [ -d "${APP_DIR}/media" ]; then
+  chown -R www-data:www-data "${APP_DIR}/media"
+fi
+
 echo "==> Restart Gunicorn"
 sudo systemctl restart "${SERVICE}"
 
