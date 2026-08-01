@@ -1,8 +1,27 @@
 from decimal import Decimal
 
+from django.core.files.uploadedfile import UploadedFile
 from django.db import models
 from django.urls import reverse
 from django.utils.text import slugify
+
+
+def _maybe_compress_upload(instance, field_name):
+    """Compress newly uploaded images before they hit disk."""
+    if getattr(instance, "_skip_image_optimize", False):
+        return
+    field = getattr(instance, field_name, None)
+    if not field:
+        return
+    file_obj = getattr(field, "file", None)
+    if not isinstance(file_obj, UploadedFile):
+        return
+    from .image_utils import optimize_image_file
+
+    result = optimize_image_file(file_obj)
+    if result:
+        content, name = result
+        field.save(name, content, save=False)
 
 
 class TimeStampedModel(models.Model):
@@ -26,6 +45,7 @@ class MediaAsset(TimeStampedModel):
         return self.title or (self.file.name.rsplit("/", 1)[-1] if self.file else "asset")
 
     def save(self, *args, **kwargs):
+        _maybe_compress_upload(self, "file")
         if not self.title and self.file:
             base = self.file.name.rsplit("/", 1)[-1]
             self.title = base.rsplit(".", 1)[0].replace("-", " ").replace("_", " ").strip()
@@ -58,6 +78,7 @@ class Category(TimeStampedModel):
     def save(self, *args, **kwargs):
         if not self.slug:
             self.slug = slugify(self.name)
+        _maybe_compress_upload(self, "image")
         super().save(*args, **kwargs)
 
     def get_absolute_url(self):
@@ -344,6 +365,10 @@ class ProductImage(TimeStampedModel):
     def __str__(self):
         color = self.color.name if self.color else "default"
         return f"{self.product.name} — {color}"
+
+    def save(self, *args, **kwargs):
+        _maybe_compress_upload(self, "image")
+        super().save(*args, **kwargs)
 
 
 class ProductVariation(TimeStampedModel):

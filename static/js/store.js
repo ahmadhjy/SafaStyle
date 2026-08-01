@@ -230,11 +230,21 @@
     },
 
     selectFirstAvailableSize() {
-      const buttons = [...document.querySelectorAll("#qv-sizes .qv-size")].filter(
-        (b) => !b.disabled
-      );
+      const buttons = [...document.querySelectorAll("#qv-sizes .qv-size")];
       if (!buttons.length) return;
-      this.selectSize(buttons[0]._size, buttons[0]);
+      const { product, color } = this.state;
+      const match = buttons.find((btn) => {
+        if (btn.disabled) return false;
+        return product.variations.some(
+          (v) =>
+            Number(v.size_id) === Number(btn._size.id) &&
+            (color == null || Number(v.color_id) === Number(color))
+        );
+      });
+      const first = match || buttons.find((b) => !b.disabled) || buttons[0];
+      if (!first) return;
+      first.disabled = false;
+      this.selectSize(first._size, first);
     },
 
     selectColor(c) {
@@ -263,7 +273,9 @@
       [...document.querySelectorAll("#qv-sizes .qv-size")].forEach((btn) => {
         const sid = btn._size.id;
         const exists = product.variations.some(
-          (v) => (!color || v.color_id === color) && v.size_id === sid
+          (v) =>
+            Number(v.size_id) === Number(sid) &&
+            (color == null || Number(v.color_id) === Number(color))
         );
         btn.disabled = color != null && !exists;
         if (btn.disabled && this.state.size === sid) {
@@ -295,12 +307,21 @@
       if (!v) {
         now.textContent = `$${p.price}`;
         was.hidden = true;
-        stock.textContent =
-          this.state.needColor || this.state.needSize ? "Select options" : "Unavailable";
+        if (this.state.needSize && this.state.size == null) {
+          stock.textContent = "Please select a size";
+        } else if (this.state.needColor && this.state.color == null) {
+          stock.textContent = "Please select a color";
+        } else {
+          stock.textContent =
+            this.state.needColor || this.state.needSize ? "Select options" : "Unavailable";
+        }
         stock.className = "qv-stock";
-        addBtn.disabled = true;
+        // Keep enabled so clicks can show a toast error.
+        addBtn.disabled = false;
+        addBtn.dataset.incomplete = "1";
         return;
       }
+      delete addBtn.dataset.incomplete;
       now.textContent = `$${v.current_price}`;
       if (v.sale_price && Number(v.sale_price) < Number(v.price)) {
         was.hidden = false;
@@ -323,11 +344,20 @@
     add() {
       const { product, color, size, needColor, needSize } = this.state;
       if (needSize && size == null) {
-        toast("Please select a size.", { error: true });
+        toast("Please select a size before adding to your bag.", { error: true });
         return;
       }
       if (needColor && color == null) {
-        toast("Please select a color.", { error: true });
+        toast("Please select a color before adding to your bag.", { error: true });
+        return;
+      }
+      const v = this.currentVariation();
+      if (!v) {
+        toast("Please choose the available options.", { error: true });
+        return;
+      }
+      if (!v.in_stock) {
+        toast("This option is out of stock.", { error: true });
         return;
       }
       const addBtn = document.getElementById("qv-add");

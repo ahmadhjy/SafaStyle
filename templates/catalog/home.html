@@ -125,7 +125,7 @@
       </div>
       <a class="btn btn-ghost" href="{% url 'catalog:shop' %}?sale=1">View all</a>
     </div>
-    <div class="product-grid reveal-group">
+    <div class="product-grid">
       {% for product in sale_items %}
         {% include "catalog/partials/product_card.html" %}
       {% endfor %}
@@ -144,7 +144,7 @@
       </div>
       <a class="btn btn-ghost" href="{% url 'catalog:shop' %}">Open shop</a>
     </div>
-    <div class="product-grid reveal-group">
+    <div class="product-grid">
       {% for product in latest %}
         {% include "catalog/partials/product_card.html" %}
       {% empty %}
