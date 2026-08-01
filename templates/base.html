@@ -7,23 +7,52 @@
   <title>{% block title %}{{ site.store_name }}{% endblock %}</title>
   <meta name="description" content="{% block meta_description %}{{ site.tagline }} — {{ site.about|truncatechars:140 }}{% endblock %}">
   <meta name="robots" content="{% block meta_robots %}index, follow{% endblock %}">
-  <link rel="canonical" href="{% block canonical_url %}{{ request.build_absolute_uri }}{% endblock %}">
+  <link rel="canonical" href="{% block canonical_url %}{{ canonical_url }}{% endblock %}">
   <meta property="og:site_name" content="{{ site.store_name }}">
   <meta property="og:title" content="{% block og_title %}{{ site.store_name }}{% endblock %}">
   <meta property="og:description" content="{% block og_description %}{{ site.tagline }}{% endblock %}">
   <meta property="og:type" content="{% block og_type %}website{% endblock %}">
-  <meta property="og:url" content="{{ request.build_absolute_uri }}">
-  {% block og_image %}{% endblock %}
+  <meta property="og:url" content="{% block og_url %}{{ canonical_url }}{% endblock %}">
+  {% block og_image %}
+  <meta property="og:image" content="{{ site_url }}{% static 'img/banners/banner1-1600.webp' %}">
+  <meta property="og:image:width" content="1600">
+  <meta property="og:image:height" content="666">
+  {% endblock %}
   <meta name="twitter:card" content="summary_large_image">
   <meta name="theme-color" content="#1c1526">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Outfit:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="preload" href="{% static 'fonts/outfit-400.woff2' %}" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="{% static 'fonts/cormorant-garamond-600.woff2' %}" as="font" type="font/woff2" crossorigin>
   <link rel="icon" href="{% static 'img/favicon.ico' %}" sizes="any">
   <link rel="icon" type="image/png" sizes="32x32" href="{% static 'img/favicon-32.png' %}">
   <link rel="apple-touch-icon" href="{% static 'img/apple-touch-icon.png' %}">
+  <link rel="stylesheet" href="{% static 'css/fonts.css' %}?v={{ static_version }}">
   <link rel="stylesheet" href="{% static 'css/main.css' %}?v={{ static_version }}">
   {% block extra_head %}{% endblock %}
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "Organization",
+        "name": "{{ site.store_name|escapejs }}",
+        "url": "{{ site_url }}/",
+        "logo": "{{ site_url }}{% static 'img/logo.png' %}",
+        "email": "{{ site.email|escapejs }}",
+        "telephone": "{{ site.phone_boutique|escapejs }}"
+      },
+      {
+        "@type": "WebSite",
+        "name": "{{ site.store_name|escapejs }}",
+        "url": "{{ site_url }}/",
+        "potentialAction": {
+          "@type": "SearchAction",
+          "target": "{{ site_url }}{% url 'catalog:shop' %}?q={search_term_string}",
+          "query-input": "required name=search_term_string"
+        }
+      }
+    ]
+  }
+  </script>
 </head>
 <body class="{% block body_class %}{% endblock %}">
   <a class="skip-link" href="#main">Skip to content</a>
@@ -44,7 +73,7 @@
         <a href="{% url 'catalog:home' %}" class="{% if request.resolver_match.url_name == 'home' %}is-active{% endif %}">Home</a>
         <a href="{% url 'catalog:shop' %}" class="{% if request.resolver_match.url_name == 'shop' %}is-active{% endif %}">Shop</a>
         <div class="nav-dropdown">
-          <button type="button" class="nav-dropdown-toggle" aria-expanded="false">Categories</button>
+          <button type="button" class="nav-dropdown-toggle" aria-expanded="false" aria-haspopup="true">Categories</button>
           <div class="nav-dropdown-menu">
             {% for cat in nav_categories %}
               <a href="{% url 'catalog:category' cat.slug %}">{{ cat.name }}</a>
@@ -87,7 +116,7 @@
           <span class="cart-badge{% if not cart_count %} is-empty{% endif %}" id="cart-badge">{{ cart_count }}</span>
           <span class="cart-meta" id="cart-meta">{{ cart_count }} / ${{ cart_total|floatformat:2 }}</span>
         </a>
-        <button type="button" class="icon-btn menu-toggle" aria-label="Menu" data-menu-toggle>
+        <button type="button" class="icon-btn menu-toggle" aria-label="Menu" aria-expanded="false" aria-controls="top" data-menu-toggle>
           <span></span><span></span>
         </button>
       </div>
@@ -144,7 +173,9 @@
   </footer>
 
   <script src="{% static 'js/main.js' %}?v={{ static_version }}" defer></script>
+  {% if needs_store_js %}
   <script src="{% static 'js/store.js' %}?v={{ static_version }}" defer></script>
+  {% endif %}
   {% block extra_js %}{% endblock %}
 </body>
 </html>

@@ -7,26 +7,32 @@ from .models import Category, Product, ProductImage, ProductVariation
 from .category_icons import accent_for_slug, icon_static_path
 
 
-# Homepage hero banners (wide ~2.4:1 PNGs in static/img/banners/).
+# Homepage hero banners — WebP derivatives in static/img/banners/.
 HERO_BANNER_SLIDES = (
     {
-        "image": "img/banners/banner1.png",
-        "width": 1942,
-        "height": 809,
+        "image": "img/banners/banner1.webp",
+        "image_mobile": "img/banners/banner1-900.webp",
+        "image_desktop": "img/banners/banner1-1600.webp",
+        "width": 1600,
+        "height": 666,
         "eyebrow": "New Arrivals",
         "object_position": "center center",
     },
     {
-        "image": "img/banners/banner2.png",
-        "width": 1973,
-        "height": 797,
+        "image": "img/banners/banner2.webp",
+        "image_mobile": "img/banners/banner2-900.webp",
+        "image_desktop": "img/banners/banner2-1600.webp",
+        "width": 1600,
+        "height": 646,
         "eyebrow": "Sets",
         "object_position": "62% center",
     },
     {
-        "image": "img/banners/banner3.png",
-        "width": 1973,
-        "height": 797,
+        "image": "img/banners/banner3.webp",
+        "image_mobile": "img/banners/banner3-900.webp",
+        "image_desktop": "img/banners/banner3-1600.webp",
+        "width": 1600,
+        "height": 646,
         "eyebrow": "Accessories",
         "object_position": "center center",
     },
@@ -38,8 +44,24 @@ def hero_slides():
 
 
 FEATURE_EDITORIAL = (
-    {"slug": "sets", "name": "Sets", "image": "img/featured/featured1.png"},
-    {"slug": "bags", "name": "Bags", "image": "img/featured/featured2.png"},
+    {
+        "slug": "sets",
+        "name": "Sets",
+        "image": "img/featured/featured1.webp",
+        "image_mobile": "img/featured/featured1-600.webp",
+        "image_desktop": "img/featured/featured1-1200.webp",
+        "width": 1200,
+        "height": 800,
+    },
+    {
+        "slug": "bags",
+        "name": "Bags",
+        "image": "img/featured/featured2.webp",
+        "image_mobile": "img/featured/featured2-600.webp",
+        "image_desktop": "img/featured/featured2-1200.webp",
+        "width": 1200,
+        "height": 800,
+    },
 )
 
 
@@ -75,6 +97,10 @@ def feature_editorial_boxes():
                 "name": category.name,
                 "url": category.get_absolute_url(),
                 "image": item["image"],
+                "image_mobile": item["image_mobile"],
+                "image_desktop": item["image_desktop"],
+                "width": item["width"],
+                "height": item["height"],
             }
         )
     return boxes

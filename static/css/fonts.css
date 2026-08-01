@@ -1,0 +1,17 @@
+/* Self-hosted latin faces — avoids render-blocking Google Fonts. */
+@font-face {
+  font-family: "Cormorant Garamond";
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url("../fonts/cormorant-garamond-600.woff2") format("woff2");
+}
+
+/* Outfit latin file from Google is variable across these weights. */
+@font-face {
+  font-family: "Outfit";
+  font-style: normal;
+  font-weight: 400 600;
+  font-display: swap;
+  src: url("../fonts/outfit-400.woff2") format("woff2");
+}

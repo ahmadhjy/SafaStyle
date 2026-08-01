@@ -7,7 +7,8 @@
 
 {% block extra_head %}
 {% if slides %}
-<link rel="preload" as="image" href="{% static slides.0.image %}" fetchpriority="high">
+<link rel="preload" as="image" href="{% static slides.0.image_mobile %}" type="image/webp" media="(max-width: 700px)" fetchpriority="high">
+<link rel="preload" as="image" href="{% static slides.0.image_desktop %}" type="image/webp" media="(min-width: 701px)" fetchpriority="high">
 {% endif %}
 {% endblock %}
 
@@ -17,22 +18,34 @@
     <div class="hero-track">
     {% for slide in slides %}
       <div class="hero-slide {% if forloop.first %}is-active{% endif %}" data-slide role="group" aria-roledescription="slide" aria-label="Slide {{ forloop.counter }} of {{ slides|length }}">
-        <img class="hero-media"
-             src="{% static slide.image %}"
-             alt=""
-             width="{{ slide.width }}"
-             height="{{ slide.height }}"
-             decoding="async"
-             {% if forloop.first %}loading="eager" fetchpriority="high"{% else %}loading="lazy"{% endif %}
-             style="--hero-pos: {{ slide.object_position|default:'center center' }}">
+        <picture>
+          <source type="image/webp" media="(max-width: 700px)" srcset="{% static slide.image_mobile %}">
+          <source type="image/webp" srcset="{% static slide.image_desktop %}">
+          <img class="hero-media"
+               src="{% static slide.image_desktop %}"
+               alt="{{ slide.eyebrow }} — {{ site.store_name }}"
+               width="{{ slide.width }}"
+               height="{{ slide.height }}"
+               decoding="async"
+               {% if forloop.first %}loading="eager" fetchpriority="high"{% else %}loading="lazy"{% endif %}
+               style="--hero-pos: {{ slide.object_position|default:'center center' }}">
+        </picture>
         <div class="hero-scrim" aria-hidden="true"></div>
         <div class="hero-content">
           <p class="eyebrow eyebrow--light">{{ slide.eyebrow }}</p>
+          {% if forloop.first %}
           <h1 class="hero-brand">
             <span class="hs-line">Modest.</span>
             <span class="hs-line">Modern.</span>
             <span class="hs-line gold">Made for you.</span>
           </h1>
+          {% else %}
+          <p class="hero-brand">
+            <span class="hs-line">Modest.</span>
+            <span class="hs-line">Modern.</span>
+            <span class="hs-line gold">Made for you.</span>
+          </p>
+          {% endif %}
           <p class="hero-lead">Quality fabrics, tailored cuts, and statement modest looks — new arrivals every week.</p>
           <div class="hero-actions">
             <a class="btn btn-gold" href="{% url 'catalog:shop' %}">
@@ -100,7 +113,16 @@
       {% for box in feature_editorial %}
         <a class="feature-card reveal" href="{{ box.url }}">
           <div class="feature-media">
-            <img src="{% static box.image %}" alt="{{ box.name }}" loading="lazy" decoding="async">
+            <picture>
+              <source type="image/webp" media="(max-width: 700px)" srcset="{% static box.image_mobile %}">
+              <source type="image/webp" srcset="{% static box.image_desktop %}">
+              <img src="{% static box.image_desktop %}"
+                   alt="{{ box.name }}"
+                   width="{{ box.width|default:1200 }}"
+                   height="{{ box.height|default:800 }}"
+                   loading="lazy"
+                   decoding="async">
+            </picture>
           </div>
           <div class="feature-overlay">
             <p class="eyebrow eyebrow--light">Collection</p>

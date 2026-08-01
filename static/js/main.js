@@ -12,6 +12,22 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
+  // Categories dropdown accessibility
+  document.querySelectorAll(".nav-dropdown").forEach((dd) => {
+    const btn = dd.querySelector(".nav-dropdown-toggle");
+    if (!btn) return;
+    const sync = () => {
+      const open = dd.matches(":focus-within") || dd.classList.contains("is-open");
+      btn.setAttribute("aria-expanded", open ? "true" : "false");
+    };
+    btn.addEventListener("click", () => {
+      dd.classList.toggle("is-open");
+      sync();
+    });
+    dd.addEventListener("focusin", sync);
+    dd.addEventListener("focusout", () => setTimeout(sync, 0));
+  });
+
   // Header shrink on scroll
   const header = document.querySelector(".site-header");
   const onScroll = () => {

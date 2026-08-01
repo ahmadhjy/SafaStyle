@@ -645,6 +645,12 @@ body.nav-open .site-header .header-search input {
   z-index: 1;
 }
 
+.hero-slide > picture {
+  position: absolute;
+  inset: 0;
+  display: block;
+}
+
 .hero-media {
   position: absolute;
   inset: 0;
@@ -653,21 +659,6 @@ body.nav-open .site-header .header-search input {
   object-fit: cover;
   object-position: var(--hero-pos, center center);
   display: block;
-  transform: scale(1.02);
-  will-change: transform;
-}
-
-.hero-slide.is-active .hero-media {
-  animation: heroBannerIn 8s var(--ease) forwards;
-}
-
-@keyframes heroBannerIn {
-  from {
-    transform: scale(1.08);
-  }
-  to {
-    transform: scale(1.02);
-  }
 }
 
 .hero-media--fallback {
@@ -783,6 +774,7 @@ body.nav-open .site-header .header-search input {
 }
 
 .hero-dot {
+  position: relative;
   width: 10px;
   height: 10px;
   border-radius: 50%;
@@ -790,6 +782,13 @@ body.nav-open .site-header .header-search input {
   background: rgba(255, 255, 255, 0.4);
   cursor: pointer;
   transition: transform 0.3s var(--ease), background 0.3s var(--ease);
+}
+
+/* Expand tap target to ≥44×44 without changing visual size */
+.hero-dot::before {
+  content: "";
+  position: absolute;
+  inset: -17px;
 }
 
 .hero-dot.is-active {
@@ -2632,6 +2631,12 @@ body.nav-open .site-header .header-search input {
   inset: 0;
 }
 
+.feature-media picture {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
 .feature-media img {
   width: 100%;
   height: 100%;
@@ -2715,11 +2720,12 @@ body.nav-open .site-header .header-search input {
 }
 
 /* ===== Colorful accents ===== */
-.eyebrow--magenta { color: var(--magenta); }
-.eyebrow--teal { color: var(--teal); }
-.eyebrow--orange { color: var(--orange); }
-.eyebrow--purple { color: var(--purple); }
-.eyebrow--gold { color: var(--gold); }
+/* Darkened for WCAG AA contrast on light backgrounds */
+.eyebrow--magenta { color: #b01563; }
+.eyebrow--teal { color: #0f7a6b; }
+.eyebrow--orange { color: #c24a16; }
+.eyebrow--purple { color: #7a3476; }
+.eyebrow--gold { color: #9a6f08; }
 
 .pillars {
   border-top: 3px solid transparent;
