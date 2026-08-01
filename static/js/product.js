@@ -130,22 +130,40 @@
     return Boolean(v && v.in_stock);
   }
 
-  function findBestVariation(preferColorId) {
-    const needColor = colorBtns.length > 0;
-    const needSize = sizeBtns.length > 0;
-    let pool = variations.slice();
-    if (preferColorId != null && needColor) {
-      const forColor = pool.filter((v) => Number(v.color_id) === Number(preferColorId));
-      if (forColor.length) pool = forColor;
+  function variationFor(colorId, sizeId) {
+    return variations.find(
+      (v) =>
+        (colorId == null || Number(v.color_id) === Number(colorId)) &&
+        (sizeId == null || Number(v.size_id) === Number(sizeId))
+    );
+  }
+
+  // Walk colors in the order they're shown, then sizes in the order they're
+  // shown, and return the first in-stock combination. This matches exactly
+  // what the shopper sees (e.g. Black + second size before moving to Gray).
+  function firstStockedCombo() {
+    const colorIds = colorBtns.length
+      ? colorBtns.map((b) => Number(b.dataset.colorId))
+      : [null];
+    const sizeIds = sizeBtns.length
+      ? sizeBtns.map((b) => Number(b.dataset.sizeId))
+      : [null];
+    for (const cid of colorIds) {
+      for (const sid of sizeIds) {
+        const v = variationFor(cid, sid);
+        if (v && variationInStock(v)) return { colorId: cid, sizeId: sid };
+      }
     }
-    const inStock = pool.filter(variationInStock);
-    if (inStock.length) return inStock[0];
-    // Fall back to any in-stock variation on the product (other colors).
-    if (preferColorId != null) {
-      const anyStock = variations.find(variationInStock);
-      if (anyStock) return anyStock;
+    return null;
+  }
+
+  function firstStockedSizeForColor(colorId) {
+    for (const btn of sizeBtns) {
+      const sid = Number(btn.dataset.sizeId);
+      const v = variationFor(colorId, sid);
+      if (v && variationInStock(v)) return sid;
     }
-    return pool[0] || variations[0] || null;
+    return null;
   }
 
   function activateColor(colorId) {
@@ -279,14 +297,10 @@
   function applyColor(btn) {
     activateColor(btn.dataset.colorId);
     syncSizeAvailability();
-    // Keep the shopper on the color they chose; prefer an in-stock size for it.
-    const bestForColor = findBestVariation(selectedColor);
-    if (
-      bestForColor &&
-      Number(bestForColor.color_id) === Number(selectedColor) &&
-      bestForColor.size_id != null
-    ) {
-      activateSize(bestForColor.size_id);
+    // Keep the shopper on the color they chose; pick its first in-stock size.
+    const sid = firstStockedSizeForColor(selectedColor);
+    if (sid != null) {
+      activateSize(sid);
     } else {
       selectFirstInStockSize();
     }
@@ -294,23 +308,29 @@
   }
 
   function selectInitialStockedOptions() {
-    const best = findBestVariation(null);
-    if (!best) {
-      setGallery(null);
+    const pick = firstStockedCombo();
+    if (pick) {
+      if (pick.colorId != null && colorBtns.length) {
+        activateColor(pick.colorId);
+      } else {
+        setGallery(null);
+      }
+      syncSizeAvailability();
+      if (pick.sizeId != null && sizeBtns.length) {
+        activateSize(pick.sizeId);
+      }
       updateUI();
       return;
     }
-    if (best.color_id != null && colorBtns.length) {
-      activateColor(best.color_id);
+    // Nothing is in stock — still select the first shown color/size so the
+    // options are highlighted, and the note explains it's out of stock.
+    if (colorBtns.length) {
+      activateColor(colorBtns[0].dataset.colorId);
     } else {
       setGallery(null);
     }
     syncSizeAvailability();
-    if (best.size_id != null && sizeBtns.length) {
-      activateSize(best.size_id);
-    } else {
-      selectFirstInStockSize();
-    }
+    if (sizeBtns.length) selectFirstInStockSize();
     updateUI();
   }
 

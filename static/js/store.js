@@ -197,52 +197,67 @@
       addBtn.onclick = () => this.add();
     },
 
-    firstInStockVariation(preferColorId) {
-      const { product, needColor } = this.state;
-      let pool = product.variations.slice();
-      if (preferColorId != null && needColor) {
-        const forColor = pool.filter((v) => Number(v.color_id) === Number(preferColorId));
-        if (forColor.length) pool = forColor;
+    variationFor(colorId, sizeId) {
+      return this.state.product.variations.find(
+        (v) =>
+          (colorId == null || Number(v.color_id) === Number(colorId)) &&
+          (sizeId == null || Number(v.size_id) === Number(sizeId))
+      );
+    },
+
+    // First in-stock combo, walking colors then sizes in displayed order.
+    firstStockedCombo() {
+      const { product } = this.state;
+      const colorIds = product.colors.length
+        ? product.colors.map((c) => Number(c.id))
+        : [null];
+      const sizeIds = product.sizes.length
+        ? product.sizes.map((s) => Number(s.id))
+        : [null];
+      for (const cid of colorIds) {
+        for (const sid of sizeIds) {
+          const v = this.variationFor(cid, sid);
+          if (v && v.in_stock) return { colorId: cid, sizeId: sid };
+        }
       }
-      const inStock = pool.filter((v) => v.in_stock);
-      if (inStock.length) return inStock[0];
-      if (preferColorId != null) {
-        const any = product.variations.find((v) => v.in_stock);
-        if (any) return any;
+      return null;
+    },
+
+    selectSizeById(sizeId) {
+      const size = this.state.product.sizes.find((s) => Number(s.id) === Number(sizeId));
+      const btn = [...document.querySelectorAll("#qv-sizes .qv-size")].find(
+        (b) => Number(b._size.id) === Number(sizeId)
+      );
+      if (size && btn) {
+        btn.disabled = false;
+        this.selectSize(size, btn);
+        return true;
       }
-      return pool[0] || product.variations[0] || null;
+      return false;
     },
 
     selectInitialStockedOptions() {
       const { product } = this.state;
-      const best = this.firstInStockVariation(null);
-      if (!best) {
+      const pick = this.firstStockedCombo();
+      if (pick) {
+        if (pick.colorId != null && product.colors.length) {
+          const color = product.colors.find((c) => Number(c.id) === Number(pick.colorId));
+          if (color) this.selectColor(color);
+        } else {
+          this.syncSizes();
+        }
+        if (pick.sizeId != null) this.selectSizeById(pick.sizeId);
         this.update();
         return;
       }
-      if (best.color_id != null && product.colors.length) {
-        const color = product.colors.find((c) => Number(c.id) === Number(best.color_id));
-        if (color) this.selectColor(color);
-        else if (best.size_id != null) {
-          this.syncSizes();
-          const size = product.sizes.find((s) => Number(s.id) === Number(best.size_id));
-          if (size) {
-            const btn = [...document.querySelectorAll("#qv-sizes .qv-size")].find(
-              (b) => Number(b._size.id) === Number(size.id)
-            );
-            if (btn) this.selectSize(size, btn);
-          }
-          this.update();
-        } else {
-          this.update();
-        }
+      // Nothing in stock — show first options anyway with an out-of-stock note.
+      if (product.colors.length) {
+        this.selectColor(product.colors[0]);
       } else if (product.sizes.length) {
         this.syncSizes();
         this.selectFirstAvailableSize();
-        this.update();
-      } else {
-        this.update();
       }
+      this.update();
     },
 
     imagesForColor(colorId) {
@@ -306,19 +321,16 @@
       );
       this.setImage(c.id, c);
       this.syncSizes();
-      const best = this.firstInStockVariation(c.id);
-      if (best && Number(best.color_id) === Number(c.id) && best.size_id != null) {
-        const size = this.state.product.sizes.find(
-          (s) => Number(s.id) === Number(best.size_id)
-        );
-        const btn = [...document.querySelectorAll("#qv-sizes .qv-size")].find(
-          (b) => Number(b._size.id) === Number(best.size_id)
-        );
-        if (size && btn) this.selectSize(size, btn);
-        else this.selectFirstAvailableSize();
-      } else {
-        this.selectFirstAvailableSize();
+      // Pick this color's first in-stock size (in displayed order).
+      let picked = false;
+      for (const s of this.state.product.sizes) {
+        const v = this.variationFor(c.id, s.id);
+        if (v && v.in_stock) {
+          picked = this.selectSizeById(s.id);
+          if (picked) break;
+        }
       }
+      if (!picked) this.selectFirstAvailableSize();
       this.update();
     },
 
