@@ -1,4 +1,5 @@
 from django.contrib import admin
+from django.utils.html import format_html
 
 from .models import Governorate, Order, OrderItem
 
@@ -6,7 +7,17 @@ from .models import Governorate, Order, OrderItem
 class OrderItemInline(admin.TabularInline):
     model = OrderItem
     extra = 0
+    fields = (
+        "product_image",
+        "product_name",
+        "variation_label",
+        "sku",
+        "unit_price",
+        "quantity",
+        "line_total",
+    )
     readonly_fields = (
+        "product_image",
         "product_name",
         "variation_label",
         "sku",
@@ -15,6 +26,50 @@ class OrderItemInline(admin.TabularInline):
         "line_total",
     )
     can_delete = False
+
+    def get_queryset(self, request):
+        return (
+            super()
+            .get_queryset(request)
+            .select_related("variation__product", "variation__color", "variation__size")
+            .prefetch_related("variation__product__images")
+        )
+
+    @admin.display(description="Image")
+    def product_image(self, obj):
+        url = self._image_url(obj)
+        if not url:
+            return format_html(
+                '<span style="display:inline-block;width:56px;height:72px;'
+                'background:#f0ebe3;border-radius:6px;"></span>'
+            )
+        return format_html(
+            '<img src="{}" alt="" style="width:56px;height:72px;object-fit:cover;'
+            'border-radius:6px;display:block;background:#f0ebe3;" />',
+            url,
+        )
+
+    def _image_url(self, obj):
+        variation = obj.variation
+        if not variation or not variation.product_id:
+            return ""
+        product = variation.product
+        images = list(product.images.all())
+        # Prefer the image for this color, then primary / default gallery.
+        if variation.color_id:
+            for img in images:
+                if img.color_id == variation.color_id and img.image:
+                    return img.image.url
+        for img in images:
+            if img.is_primary and img.image:
+                return img.image.url
+        for img in images:
+            if img.color_id is None and img.image:
+                return img.image.url
+        for img in images:
+            if img.image:
+                return img.image.url
+        return ""
 
 
 @admin.register(Governorate)
@@ -88,3 +143,6 @@ class OrderAdmin(admin.ModelAdmin):
             {"fields": ("order_notes", "subtotal", "delivery_fee", "total")},
         ),
     )
+
+    def get_queryset(self, request):
+        return super().get_queryset(request).select_related("governorate", "user")
