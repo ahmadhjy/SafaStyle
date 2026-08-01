@@ -6,7 +6,7 @@ from django.urls import include, path
 from django.contrib.sitemaps.views import sitemap
 
 from catalog.sitemaps import CategorySitemap, PageSitemap, ProductSitemap, StaticViewSitemap
-from pages.views_seo import robots_txt
+from pages.views_seo import llms_txt, robots_txt
 
 sitemaps = {
     "products": ProductSitemap,
@@ -19,6 +19,7 @@ urlpatterns = [
     path("admin/", admin.site.urls),
     path("account/", include("accounts.urls")),
     path("robots.txt", robots_txt, name="robots"),
+    path("llms.txt", llms_txt, name="llms"),
     path("sitemap.xml", sitemap, {"sitemaps": sitemaps}, name="sitemap"),
     path("", include("catalog.urls")),
     path("", include("orders.urls")),
