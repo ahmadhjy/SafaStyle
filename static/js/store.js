@@ -5,6 +5,64 @@
   const QUICK_ADD_URL = "/cart/quick-add/";
   const QUICK_VIEW_URL = (slug) => `/api/quick-view/${slug}/`;
 
+  // --- Quantity steppers (+ / − only, capped by stock) --------------------
+  function syncQtyStepper(root) {
+    if (!root) return;
+    const input = root.querySelector("input");
+    const minus = root.querySelector("[data-qty-minus]");
+    const plus = root.querySelector("[data-qty-plus]");
+    if (!input) return;
+    const min = Number(input.min);
+    const max = Number(input.max);
+    const lo = Number.isFinite(min) ? min : 1;
+    const hi = Number.isFinite(max) ? max : 99;
+    let val = parseInt(input.value, 10);
+    if (!Number.isFinite(val)) val = lo;
+    val = Math.max(lo, Math.min(hi, val));
+    input.value = String(val);
+    if (minus) minus.disabled = val <= lo;
+    if (plus) plus.disabled = val >= hi;
+  }
+
+  function wireQtySteppers(scope = document) {
+    scope.querySelectorAll("[data-qty-stepper]").forEach((root) => {
+      if (root._qtyWired) {
+        syncQtyStepper(root);
+        return;
+      }
+      root._qtyWired = true;
+      const input = root.querySelector("input");
+      if (!input) return;
+      const submitOnChange = root.hasAttribute("data-qty-submit");
+
+      root.addEventListener("click", (e) => {
+        const minus = e.target.closest("[data-qty-minus]");
+        const plus = e.target.closest("[data-qty-plus]");
+        if (!minus && !plus) return;
+        e.preventDefault();
+        let val = parseInt(input.value, 10) || 0;
+        if (minus) val -= 1;
+        if (plus) val += 1;
+        input.value = String(val);
+        syncQtyStepper(root);
+        if (submitOnChange && typeof root.requestSubmit === "function") {
+          root.requestSubmit();
+        } else if (submitOnChange) {
+          root.submit();
+        }
+      });
+
+      // Keep +/− in sync when JS updates min/max (stock changes).
+      const mo = new MutationObserver(() => syncQtyStepper(root));
+      mo.observe(input, { attributes: true, attributeFilter: ["min", "max", "value"] });
+      syncQtyStepper(root);
+    });
+  }
+
+  document.addEventListener("DOMContentLoaded", () => wireQtySteppers());
+  // Cart / pages without waiting if DOM is already ready.
+  if (document.readyState !== "loading") wireQtySteppers();
+
   function csrfToken() {
     const el = document.getElementById("csrf-token");
     if (el && el.dataset.token) return el.dataset.token;
@@ -102,7 +160,11 @@
             </div>
             <p class="qv-stock" id="qv-stock">Select options</p>
             <div class="qv-actions">
-              <input type="number" id="qv-qty" value="1" min="1" max="99" aria-label="Quantity">
+              <div class="qv-qty-stepper" data-qty-stepper>
+                <button type="button" class="qty-btn" data-qty-minus aria-label="Decrease quantity">−</button>
+                <input type="number" id="qv-qty" value="1" min="1" max="99" readonly inputmode="none" aria-label="Quantity">
+                <button type="button" class="qty-btn" data-qty-plus aria-label="Increase quantity">+</button>
+              </div>
               <button type="button" class="btn btn-gold" id="qv-add" disabled>Add to bag</button>
             </div>
             <a class="qv-full-link" id="qv-full" href="#">View full details</a>
@@ -149,7 +211,10 @@
       document.getElementById("qv-name").textContent = p.name;
       document.getElementById("qv-short").textContent = p.short_description || "";
       document.getElementById("qv-full").href = p.url;
-      document.getElementById("qv-qty").value = 1;
+      const qtyInput = document.getElementById("qv-qty");
+      qtyInput.value = 1;
+      qtyInput.max = 99;
+      wireQtySteppers(this.overlay);
 
       // Colors
       const colorBlock = document.getElementById("qv-color-block");
@@ -409,6 +474,8 @@
         stock.className = "qv-stock in-stock";
         addBtn.disabled = false;
         qty.max = v.stock;
+        if (parseInt(qty.value, 10) > v.stock) qty.value = String(Math.max(1, v.stock));
+        syncQtyStepper(qty.closest("[data-qty-stepper]"));
       } else {
         const hasOther = p.variations.some((x) => x.in_stock);
         stock.textContent = hasOther

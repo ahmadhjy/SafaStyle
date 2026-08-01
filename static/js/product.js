@@ -282,6 +282,18 @@
       stockNote.className = "stock-note in-stock";
       addBtn.disabled = false;
       qtyInput.max = v.stock;
+      if (parseInt(qtyInput.value, 10) > v.stock) {
+        qtyInput.value = String(Math.max(1, v.stock));
+      }
+      qtyInput.dispatchEvent(new Event("change"));
+      const stepper = qtyInput.closest("[data-qty-stepper]");
+      if (stepper) {
+        const minus = stepper.querySelector("[data-qty-minus]");
+        const plus = stepper.querySelector("[data-qty-plus]");
+        const val = parseInt(qtyInput.value, 10) || 1;
+        if (minus) minus.disabled = val <= 1;
+        if (plus) plus.disabled = val >= v.stock;
+      }
       addForm.action = `/cart/add/${v.id}/`;
     } else {
       const hasOther = variations.some(variationInStock);

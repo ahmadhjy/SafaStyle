@@ -108,7 +108,11 @@
 
       <div class="qty-row">
         <label class="sr-only" for="quantity">Quantity</label>
-        <input type="number" id="quantity" name="quantity" value="1" min="1" max="99">
+        <div class="qty-stepper" data-qty-stepper>
+          <button type="button" class="qty-btn" data-qty-minus aria-label="Decrease quantity">−</button>
+          <input type="number" id="quantity" name="quantity" value="1" min="1" max="99" readonly inputmode="none">
+          <button type="button" class="qty-btn" data-qty-plus aria-label="Increase quantity">+</button>
+        </div>
       </div>
 
       <button type="submit" class="btn btn-gold btn-block" id="add-btn" disabled>Add to bag</button>
