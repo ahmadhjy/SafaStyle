@@ -52,19 +52,29 @@ class Cart:
         from catalog.models import ProductVariation
 
         ids = self.cart.keys()
-        variations = ProductVariation.objects.select_related(
-            "product", "color", "size"
-        ).filter(pk__in=ids)
-        cart = self.cart.copy()
+        variations = (
+            ProductVariation.objects.select_related("product", "color", "size")
+            .prefetch_related("product__images")
+            .filter(pk__in=ids)
+        )
+        cart = self.cart
         for variation in variations:
-            item = cart[str(variation.pk)]
-            item["variation"] = variation
-            item["price"] = Decimal(item["price"])
-            item["total"] = item["price"] * item["qty"]
-            # Always resolve the image fresh so older sessions and products
-            # that only have a default gallery photo never show a blank.
-            item["image"] = variation.product.image_url_for_color(variation.color)
-            yield item
+            stored = cart.get(str(variation.pk)) or {}
+            price = Decimal(str(stored.get("price", variation.current_price)))
+            qty = int(stored.get("qty", 0) or 0)
+            # Build a fresh dict so we never mutate / re-serialize session data
+            # with model instances or Decimal values.
+            yield {
+                "qty": qty,
+                "price": price,
+                "total": price * qty,
+                "product_id": stored.get("product_id", variation.product_id),
+                "name": stored.get("name") or variation.product.name,
+                "label": stored.get("label") or variation.label(),
+                "sku": stored.get("sku") or variation.sku or "",
+                "image": variation.product.image_url_for_color(variation.color),
+                "variation": variation,
+            }
 
     def __len__(self):
         return sum(i["qty"] for i in self.cart.values())

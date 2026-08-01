@@ -6,22 +6,41 @@
   const QUICK_VIEW_URL = (slug) => `/api/quick-view/${slug}/`;
 
   // --- Quantity steppers (+ / − only, capped by stock) --------------------
+  function qtyBound(input, attr, fallback) {
+    const raw = input.getAttribute(attr);
+    if (raw == null || raw === "") return fallback;
+    const n = Number(raw);
+    return Number.isFinite(n) ? n : fallback;
+  }
+
   function syncQtyStepper(root) {
     if (!root) return;
-    const input = root.querySelector("input");
+    const input = root.querySelector('input[name="quantity"], input[type="number"]');
     const minus = root.querySelector("[data-qty-minus]");
     const plus = root.querySelector("[data-qty-plus]");
     if (!input) return;
-    const min = Number(input.min);
-    const max = Number(input.max);
-    const lo = Number.isFinite(min) ? min : 1;
-    const hi = Number.isFinite(max) ? max : 99;
+    const lo = qtyBound(input, "min", 1);
+    const hi = qtyBound(input, "max", 99);
     let val = parseInt(input.value, 10);
     if (!Number.isFinite(val)) val = lo;
     val = Math.max(lo, Math.min(hi, val));
-    input.value = String(val);
-    if (minus) minus.disabled = val <= lo;
-    if (plus) plus.disabled = val >= hi;
+    if (input.value !== String(val)) input.value = String(val);
+    if (minus) minus.disabled = val <= lo || !!root._qtyBusy;
+    if (plus) plus.disabled = val >= hi || !!root._qtyBusy;
+  }
+
+  function submitQtyForm(root) {
+    if (!root || root._qtyBusy) return;
+    root._qtyBusy = true;
+    syncQtyStepper(root);
+    // Prefer a normal navigation submit; avoid requestSubmit quirks on
+    // forms that only have type="button" controls.
+    try {
+      HTMLFormElement.prototype.submit.call(root);
+    } catch (err) {
+      root._qtyBusy = false;
+      syncQtyStepper(root);
+    }
   }
 
   function wireQtySteppers(scope = document) {
@@ -31,7 +50,7 @@
         return;
       }
       root._qtyWired = true;
-      const input = root.querySelector("input");
+      const input = root.querySelector('input[name="quantity"], input[type="number"]');
       if (!input) return;
       const submitOnChange = root.hasAttribute("data-qty-submit");
 
@@ -39,29 +58,26 @@
         const minus = e.target.closest("[data-qty-minus]");
         const plus = e.target.closest("[data-qty-plus]");
         if (!minus && !plus) return;
+        if (root._qtyBusy) return;
         e.preventDefault();
+        e.stopPropagation();
         let val = parseInt(input.value, 10) || 0;
         if (minus) val -= 1;
         if (plus) val += 1;
         input.value = String(val);
         syncQtyStepper(root);
-        if (submitOnChange && typeof root.requestSubmit === "function") {
-          root.requestSubmit();
-        } else if (submitOnChange) {
-          root.submit();
-        }
+        if (submitOnChange) submitQtyForm(root);
       });
 
-      // Keep +/− in sync when JS updates min/max (stock changes).
-      const mo = new MutationObserver(() => syncQtyStepper(root));
-      mo.observe(input, { attributes: true, attributeFilter: ["min", "max", "value"] });
       syncQtyStepper(root);
     });
   }
 
-  document.addEventListener("DOMContentLoaded", () => wireQtySteppers());
-  // Cart / pages without waiting if DOM is already ready.
-  if (document.readyState !== "loading") wireQtySteppers();
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", () => wireQtySteppers(), { once: true });
+  } else {
+    wireQtySteppers();
+  }
 
   function csrfToken() {
     const el = document.getElementById("csrf-token");
