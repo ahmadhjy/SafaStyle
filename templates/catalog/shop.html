@@ -4,7 +4,27 @@
 
 {% block content %}
 <div class="container shop-layout">
-  <div class="shop-sidebar">
+  <div class="shop-toolbar">
+    <div>
+      <h1 class="shop-title">
+        {% if active_category %}{{ active_category.name }}{% elif q %}Results for “{{ q }}”{% else %}All products{% endif %}
+      </h1>
+      <p class="shop-count">{{ products|length }} piece{{ products|length|pluralize }}</p>
+    </div>
+    <form method="get" class="shop-sort">
+      {% if active_category %}<input type="hidden" name="category" value="{{ active_category.slug }}">{% endif %}
+      {% if q %}<input type="hidden" name="q" value="{{ q }}">{% endif %}
+      {% if request.GET.sale %}<input type="hidden" name="sale" value="1">{% endif %}
+      <label class="sr-only" for="sort">Sort</label>
+      <select id="sort" name="sort" onchange="this.form.submit()">
+        <option value="new" {% if sort == 'new' %}selected{% endif %}>Newest</option>
+        <option value="price_asc" {% if sort == 'price_asc' %}selected{% endif %}>Price: low to high</option>
+        <option value="price_desc" {% if sort == 'price_desc' %}selected{% endif %}>Price: high to low</option>
+      </select>
+    </form>
+  </div>
+
+  <div class="shop-filters-wrap">
     <button type="button" class="filters-toggle" data-filters-toggle aria-expanded="false" aria-controls="shop-filters">
       <span class="filters-toggle-label">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M4 6h16M7 12h10M10 18h4"/></svg>
@@ -13,12 +33,8 @@
       <svg class="filters-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
     </button>
 
-    <aside class="filters" id="shop-filters">
-      <div class="filters-head">
-        <h2>Browse</h2>
-        <p class="filters-sub">Categories &amp; offers</p>
-      </div>
-      <div class="filter-group">
+    <aside class="filters shop-filters" id="shop-filters">
+      <div class="filter-group filter-group--categories">
         <strong class="filter-label">Categories</strong>
         <div class="filter-chips">
           <a href="{% url 'catalog:shop' %}" class="filter-chip{% if not active_category %} is-active{% endif %}">All</a>
@@ -27,7 +43,7 @@
           {% endfor %}
         </div>
       </div>
-      <div class="filter-group">
+      <div class="filter-group filter-group--offers">
         <strong class="filter-label">Offers</strong>
         <div class="filter-chips">
           <a href="{% url 'catalog:shop' %}?sale=1" class="filter-chip{% if request.GET.sale %} is-active{% endif %}">Sale items</a>
@@ -37,26 +53,6 @@
   </div>
 
   <div class="shop-main">
-    <div class="shop-toolbar">
-      <div>
-        <h1 class="shop-title">
-          {% if active_category %}{{ active_category.name }}{% elif q %}Results for “{{ q }}”{% else %}All products{% endif %}
-        </h1>
-        <p class="shop-count">{{ products|length }} piece{{ products|length|pluralize }}</p>
-      </div>
-      <form method="get" class="shop-sort">
-        {% if active_category %}<input type="hidden" name="category" value="{{ active_category.slug }}">{% endif %}
-        {% if q %}<input type="hidden" name="q" value="{{ q }}">{% endif %}
-        {% if request.GET.sale %}<input type="hidden" name="sale" value="1">{% endif %}
-        <label class="sr-only" for="sort">Sort</label>
-        <select id="sort" name="sort" onchange="this.form.submit()">
-          <option value="new" {% if sort == 'new' %}selected{% endif %}>Newest</option>
-          <option value="price_asc" {% if sort == 'price_asc' %}selected{% endif %}>Price: low to high</option>
-          <option value="price_desc" {% if sort == 'price_desc' %}selected{% endif %}>Price: high to low</option>
-        </select>
-      </form>
-    </div>
-
     <div class="product-grid">
       {% for product in products %}
         {% include "catalog/partials/product_card.html" %}

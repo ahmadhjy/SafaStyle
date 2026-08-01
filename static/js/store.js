@@ -191,18 +191,58 @@
       }
 
       this.setImage(null, null);
-      if (p.colors.length) {
-        this.selectColor(p.colors[0]);
-      } else if (p.sizes.length) {
+      this.selectInitialStockedOptions();
+
+      const addBtn = document.getElementById("qv-add");
+      addBtn.onclick = () => this.add();
+    },
+
+    firstInStockVariation(preferColorId) {
+      const { product, needColor } = this.state;
+      let pool = product.variations.slice();
+      if (preferColorId != null && needColor) {
+        const forColor = pool.filter((v) => Number(v.color_id) === Number(preferColorId));
+        if (forColor.length) pool = forColor;
+      }
+      const inStock = pool.filter((v) => v.in_stock);
+      if (inStock.length) return inStock[0];
+      if (preferColorId != null) {
+        const any = product.variations.find((v) => v.in_stock);
+        if (any) return any;
+      }
+      return pool[0] || product.variations[0] || null;
+    },
+
+    selectInitialStockedOptions() {
+      const { product } = this.state;
+      const best = this.firstInStockVariation(null);
+      if (!best) {
+        this.update();
+        return;
+      }
+      if (best.color_id != null && product.colors.length) {
+        const color = product.colors.find((c) => Number(c.id) === Number(best.color_id));
+        if (color) this.selectColor(color);
+        else if (best.size_id != null) {
+          this.syncSizes();
+          const size = product.sizes.find((s) => Number(s.id) === Number(best.size_id));
+          if (size) {
+            const btn = [...document.querySelectorAll("#qv-sizes .qv-size")].find(
+              (b) => Number(b._size.id) === Number(size.id)
+            );
+            if (btn) this.selectSize(size, btn);
+          }
+          this.update();
+        } else {
+          this.update();
+        }
+      } else if (product.sizes.length) {
         this.syncSizes();
         this.selectFirstAvailableSize();
         this.update();
       } else {
         this.update();
       }
-
-      const addBtn = document.getElementById("qv-add");
-      addBtn.onclick = () => this.add();
     },
 
     imagesForColor(colorId) {
@@ -233,14 +273,25 @@
       const buttons = [...document.querySelectorAll("#qv-sizes .qv-size")];
       if (!buttons.length) return;
       const { product, color } = this.state;
-      const match = buttons.find((btn) => {
+      const inStock = buttons.find((btn) => {
         if (btn.disabled) return false;
         return product.variations.some(
           (v) =>
+            v.in_stock &&
             Number(v.size_id) === Number(btn._size.id) &&
             (color == null || Number(v.color_id) === Number(color))
         );
       });
+      const match =
+        inStock ||
+        buttons.find((btn) => {
+          if (btn.disabled) return false;
+          return product.variations.some(
+            (v) =>
+              Number(v.size_id) === Number(btn._size.id) &&
+              (color == null || Number(v.color_id) === Number(color))
+          );
+        });
       const first = match || buttons.find((b) => !b.disabled) || buttons[0];
       if (!first) return;
       first.disabled = false;
@@ -255,7 +306,19 @@
       );
       this.setImage(c.id, c);
       this.syncSizes();
-      this.selectFirstAvailableSize();
+      const best = this.firstInStockVariation(c.id);
+      if (best && Number(best.color_id) === Number(c.id) && best.size_id != null) {
+        const size = this.state.product.sizes.find(
+          (s) => Number(s.id) === Number(best.size_id)
+        );
+        const btn = [...document.querySelectorAll("#qv-sizes .qv-size")].find(
+          (b) => Number(b._size.id) === Number(best.size_id)
+        );
+        if (size && btn) this.selectSize(size, btn);
+        else this.selectFirstAvailableSize();
+      } else {
+        this.selectFirstAvailableSize();
+      }
       this.update();
     },
 
@@ -335,7 +398,10 @@
         addBtn.disabled = false;
         qty.max = v.stock;
       } else {
-        stock.textContent = "Out of stock";
+        const hasOther = p.variations.some((x) => x.in_stock);
+        stock.textContent = hasOther
+          ? "This option is out of stock — try another color or size"
+          : "Currently out of stock";
         stock.className = "qv-stock out";
         addBtn.disabled = true;
       }

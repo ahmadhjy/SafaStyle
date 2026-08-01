@@ -126,30 +126,67 @@
     });
   }
 
-  function sizeMatchesVariation(sizeId, colorId) {
-    return variations.some((v) => {
-      const sizeOk = Number(v.size_id) === Number(sizeId);
-      if (!sizeOk) return false;
-      if (colorBtns.length && colorId != null) {
-        return Number(v.color_id) === Number(colorId);
-      }
-      return true;
-    });
+  function variationInStock(v) {
+    return Boolean(v && v.in_stock);
   }
 
-  function selectFirstAvailableSize() {
+  function findBestVariation(preferColorId) {
+    const needColor = colorBtns.length > 0;
+    const needSize = sizeBtns.length > 0;
+    let pool = variations.slice();
+    if (preferColorId != null && needColor) {
+      const forColor = pool.filter((v) => Number(v.color_id) === Number(preferColorId));
+      if (forColor.length) pool = forColor;
+    }
+    const inStock = pool.filter(variationInStock);
+    if (inStock.length) return inStock[0];
+    // Fall back to any in-stock variation on the product (other colors).
+    if (preferColorId != null) {
+      const anyStock = variations.find(variationInStock);
+      if (anyStock) return anyStock;
+    }
+    return pool[0] || variations[0] || null;
+  }
+
+  function activateColor(colorId) {
+    if (!colorBtns.length || colorId == null) return;
+    const btn = colorBtns.find((b) => Number(b.dataset.colorId) === Number(colorId));
+    if (!btn) return;
+    selectedColor = Number(btn.dataset.colorId);
+    colorBtns.forEach((b) => b.classList.remove("is-active"));
+    btn.classList.add("is-active");
+    if (colorLabel) colorLabel.textContent = `— ${btn.title}`;
+    setGallery(selectedColor);
+  }
+
+  function activateSize(sizeId) {
+    if (!sizeBtns.length || sizeId == null) return;
+    const btn = sizeBtns.find((b) => Number(b.dataset.sizeId) === Number(sizeId));
+    if (!btn) return;
+    selectedSize = Number(btn.dataset.sizeId);
+    sizeBtns.forEach((b) => b.classList.remove("is-active"));
+    btn.classList.add("is-active");
+    btn.disabled = false;
+  }
+
+  function selectFirstInStockSize() {
     if (!sizeBtns.length) return false;
-    // Prefer first size that exists for the current color (even if out of stock),
-    // so the pill is always selected and the shopper sees a clear stock state.
-    let first =
-      sizeBtns.find((b) => !b.disabled && sizeMatchesVariation(b.dataset.sizeId, selectedColor)) ||
+    const colorId = selectedColor;
+    const inStockBtn = sizeBtns.find((b) => {
+      if (b.disabled) return false;
+      return variations.some(
+        (v) =>
+          variationInStock(v) &&
+          Number(v.size_id) === Number(b.dataset.sizeId) &&
+          (colorId == null || Number(v.color_id) === Number(colorId))
+      );
+    });
+    const fallback =
+      inStockBtn ||
       sizeBtns.find((b) => !b.disabled) ||
       sizeBtns[0];
-    if (!first) return false;
-    selectedSize = Number(first.dataset.sizeId);
-    sizeBtns.forEach((b) => b.classList.remove("is-active"));
-    first.classList.add("is-active");
-    first.disabled = false;
+    if (!fallback) return false;
+    activateSize(fallback.dataset.sizeId);
     return true;
   }
 
@@ -161,7 +198,6 @@
     return variations.find((v) => {
       if (needColor && Number(v.color_id) !== Number(selectedColor)) return false;
       if (needSize && Number(v.size_id) !== Number(selectedSize)) return false;
-      if (!needColor && v.color_id != null && colorBtns.length) return false;
       return true;
     });
   }
@@ -183,6 +219,19 @@
     });
   }
 
+  function selectedLabel() {
+    const parts = [];
+    if (selectedColor != null) {
+      const c = colorBtns.find((b) => Number(b.dataset.colorId) === Number(selectedColor));
+      if (c) parts.push(c.title);
+    }
+    if (selectedSize != null) {
+      const s = sizeBtns.find((b) => Number(b.dataset.sizeId) === Number(selectedSize));
+      if (s) parts.push(s.textContent.trim());
+    }
+    return parts.join(" / ");
+  }
+
   function updateUI() {
     const v = findVariation();
     if (!v) {
@@ -196,7 +245,6 @@
         stockNote.textContent = "Unavailable";
       }
       stockNote.className = "stock-note";
-      // Keep button clickable so shoppers always get feedback.
       addBtn.disabled = false;
       addBtn.dataset.incomplete = "1";
       return;
@@ -218,20 +266,51 @@
       qtyInput.max = v.stock;
       addForm.action = `/cart/add/${v.id}/`;
     } else {
-      stockNote.textContent = "Out of stock";
+      const hasOther = variations.some(variationInStock);
+      const label = selectedLabel();
+      stockNote.textContent = hasOther
+        ? `${label || "This option"} is out of stock — try another color or size`
+        : "Currently out of stock";
       stockNote.className = "stock-note out";
       addBtn.disabled = true;
     }
   }
 
   function applyColor(btn) {
-    selectedColor = Number(btn.dataset.colorId);
-    colorBtns.forEach((b) => b.classList.remove("is-active"));
-    btn.classList.add("is-active");
-    if (colorLabel) colorLabel.textContent = `— ${btn.title}`;
-    setGallery(selectedColor);
+    activateColor(btn.dataset.colorId);
     syncSizeAvailability();
-    selectFirstAvailableSize();
+    // Keep the shopper on the color they chose; prefer an in-stock size for it.
+    const bestForColor = findBestVariation(selectedColor);
+    if (
+      bestForColor &&
+      Number(bestForColor.color_id) === Number(selectedColor) &&
+      bestForColor.size_id != null
+    ) {
+      activateSize(bestForColor.size_id);
+    } else {
+      selectFirstInStockSize();
+    }
+    updateUI();
+  }
+
+  function selectInitialStockedOptions() {
+    const best = findBestVariation(null);
+    if (!best) {
+      setGallery(null);
+      updateUI();
+      return;
+    }
+    if (best.color_id != null && colorBtns.length) {
+      activateColor(best.color_id);
+    } else {
+      setGallery(null);
+    }
+    syncSizeAvailability();
+    if (best.size_id != null && sizeBtns.length) {
+      activateSize(best.size_id);
+    } else {
+      selectFirstInStockSize();
+    }
     updateUI();
   }
 
@@ -242,27 +321,13 @@
   sizeBtns.forEach((btn) => {
     btn.addEventListener("click", () => {
       if (btn.disabled) return;
-      selectedSize = Number(btn.dataset.sizeId);
-      sizeBtns.forEach((b) => b.classList.remove("is-active"));
-      btn.classList.add("is-active");
+      activateSize(btn.dataset.sizeId);
       updateUI();
     });
   });
 
   bindThumbButtons();
-  if (colorBtns.length) {
-    applyColor(colorBtns[0]);
-  } else {
-    setGallery(null);
-    if (sizeBtns.length) selectFirstAvailableSize();
-    updateUI();
-  }
-
-  // Single-size products: always force-select after init.
-  if (sizeBtns.length === 1) {
-    selectFirstAvailableSize();
-    updateUI();
-  }
+  selectInitialStockedOptions();
 
   addForm?.addEventListener("submit", (e) => {
     const v = findVariation();
@@ -279,7 +344,7 @@
     }
     if (!v.in_stock) {
       e.preventDefault();
-      showOptionError("This option is out of stock.");
+      showOptionError("This option is out of stock — try another color or size.");
     }
   });
 })();
