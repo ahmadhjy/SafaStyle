@@ -1260,14 +1260,14 @@ body.nav-open .site-header .header-search input {
   margin: 0 0 0.5rem;
 }
 
-/* Shop — title/sort, then filter bar above the product grid */
+/* Shop — title/sort, then filter bar above the product grid.
+   Keep the container's horizontal padding (1.25rem) so content lines up
+   with the header instead of running edge-to-edge. */
 .shop-layout {
   display: flex;
   flex-direction: column;
   gap: 1.35rem;
-  padding: 2.5rem 0 4rem;
-  width: 100%;
-  max-width: 100%;
+  padding: 2.5rem 1.25rem 4rem;
   min-width: 0;
 }
 
