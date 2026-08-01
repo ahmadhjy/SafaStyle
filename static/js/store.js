@@ -457,9 +457,12 @@
     },
   };
 
-  // --- Product card gallery scrub (hover / touch) -------------------------
+  // --- Product card gallery autoplay (hover / touch) ----------------------
   const scrubPrefetch = new Set();
+  const SCRUB_INTERVAL_MS = 850;
   let scrubActive = null;
+  let scrubTimer = null;
+  const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
   function parseGallery(media) {
     if (media._gallery) return media._gallery;
@@ -481,7 +484,7 @@
   function setScrubIndex(media, index) {
     const urls = parseGallery(media);
     if (urls.length < 2) return;
-    const i = Math.max(0, Math.min(urls.length - 1, index));
+    const i = ((index % urls.length) + urls.length) % urls.length;
     if (media._scrubIndex === i) return;
     media._scrubIndex = i;
     const img = media.querySelector("[data-scrub-img]");
@@ -493,26 +496,39 @@
     });
   }
 
-  function scrubAtPoint(media, clientX) {
+  function stopScrubTimer() {
+    if (scrubTimer) {
+      clearInterval(scrubTimer);
+      scrubTimer = null;
+    }
+  }
+
+  function startScrub(media) {
+    if (!media || scrubActive === media) return;
     const urls = parseGallery(media);
     if (urls.length < 2) return;
-    const rect = media.getBoundingClientRect();
-    if (rect.width <= 0) return;
-    const x = Math.max(0, Math.min(rect.width - 0.001, clientX - rect.left));
-    const index = Math.floor((x / rect.width) * urls.length);
-    setScrubIndex(media, index);
-  }
 
-  function activateScrub(media) {
-    if (!media || scrubActive === media) return;
-    if (scrubActive) resetScrub(scrubActive);
+    if (scrubActive) stopScrub(scrubActive);
     scrubActive = media;
     media.classList.add("is-scrubbing");
-    prefetchGallery(parseGallery(media));
+    prefetchGallery(urls);
+    setScrubIndex(media, 0);
+
+    if (reduceMotion) return;
+
+    // Advance after a short beat so the first image is seen first.
+    scrubTimer = setInterval(() => {
+      if (!scrubActive) return;
+      setScrubIndex(scrubActive, (scrubActive._scrubIndex || 0) + 1);
+    }, SCRUB_INTERVAL_MS);
   }
 
-  function resetScrub(media) {
-    if (!media) return;
+  function stopScrub(media) {
+    stopScrubTimer();
+    if (!media) {
+      scrubActive = null;
+      return;
+    }
     setScrubIndex(media, 0);
     media.classList.remove("is-scrubbing");
     if (scrubActive === media) scrubActive = null;
@@ -521,40 +537,41 @@
   function mediaFromPoint(clientX, clientY) {
     const el = document.elementFromPoint(clientX, clientY);
     if (!el || !el.closest) return null;
-    // Ignore when finger/cursor is on card action buttons
     if (el.closest(".pc-actions")) return null;
     return el.closest(".product-media.has-scrub[data-gallery]");
   }
 
+  // Desktop: autoplay while the cursor is over the product image.
   document.addEventListener(
-    "pointermove",
+    "mouseover",
     (e) => {
-      if (e.pointerType === "touch") return; // handled via touchmove (works during scroll)
-      const media = mediaFromPoint(e.clientX, e.clientY);
-      if (!media) {
-        if (scrubActive) resetScrub(scrubActive);
-        return;
-      }
-      activateScrub(media);
-      scrubAtPoint(media, e.clientX);
+      const media = e.target.closest?.(".product-media.has-scrub[data-gallery]");
+      if (!media) return;
+      startScrub(media);
     },
     { passive: true }
   );
 
-  document.documentElement.addEventListener("mouseleave", () => {
-    if (scrubActive) resetScrub(scrubActive);
-  });
+  document.addEventListener(
+    "mouseout",
+    (e) => {
+      const media = e.target.closest?.(".product-media.has-scrub[data-gallery]");
+      if (!media || !scrubActive || scrubActive !== media) return;
+      const next = e.relatedTarget;
+      if (next && media.contains(next)) return;
+      stopScrub(media);
+    },
+    { passive: true }
+  );
 
-  // Touch: map finger X across the image, including while the page scrolls.
+  // Touch: autoplay while a finger is on the image (including during scroll).
   document.addEventListener(
     "touchstart",
     (e) => {
       const t = e.touches[0];
       if (!t) return;
       const media = mediaFromPoint(t.clientX, t.clientY);
-      if (!media) return;
-      activateScrub(media);
-      scrubAtPoint(media, t.clientX);
+      if (media) startScrub(media);
     },
     { passive: true }
   );
@@ -566,11 +583,10 @@
       if (!t) return;
       const media = mediaFromPoint(t.clientX, t.clientY);
       if (!media) {
-        if (scrubActive) resetScrub(scrubActive);
+        if (scrubActive) stopScrub(scrubActive);
         return;
       }
-      activateScrub(media);
-      scrubAtPoint(media, t.clientX);
+      startScrub(media);
     },
     { passive: true }
   );
@@ -578,7 +594,7 @@
   document.addEventListener(
     "touchend",
     () => {
-      if (scrubActive) resetScrub(scrubActive);
+      if (scrubActive) stopScrub(scrubActive);
     },
     { passive: true }
   );
@@ -586,7 +602,7 @@
   document.addEventListener(
     "touchcancel",
     () => {
-      if (scrubActive) resetScrub(scrubActive);
+      if (scrubActive) stopScrub(scrubActive);
     },
     { passive: true }
   );
