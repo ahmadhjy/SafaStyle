@@ -8,14 +8,25 @@
        {% if gallery|length > 1 %}data-gallery="{{ gallery|join:'|' }}"{% endif %}>
     <a class="pc-link" href="{{ product.get_absolute_url }}" aria-label="{{ product.name }}">
       {% if gallery %}
-        <img class="pc-img pc-img--front"
+        <img class="pc-img pc-img--front is-visible"
              src="{{ gallery.0 }}"
              alt="{{ product.name }}"
              loading="lazy"
              decoding="async"
              width="600"
              height="800"
-             data-scrub-img>
+             data-scrub-a>
+        {% if gallery|length > 1 %}
+          <img class="pc-img pc-img--fade"
+               src="{{ gallery.0 }}"
+               alt=""
+               loading="lazy"
+               decoding="async"
+               width="600"
+               height="800"
+               aria-hidden="true"
+               data-scrub-b>
+        {% endif %}
       {% else %}
         <div class="pc-img pc-ph"></div>
       {% endif %}

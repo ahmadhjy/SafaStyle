@@ -938,9 +938,22 @@ body.nav-open .site-header .header-search input {
   transform: scale(1.06);
 }
 
-/* Gallery scrub: mouse/finger X position cycles images */
-.product-media.has-scrub .pc-img--front {
-  transition: none;
+/* Gallery autoplay: soft crossfade + subtle drift */
+.product-media.has-scrub .pc-img {
+  opacity: 0;
+  transform: scale(1.05);
+  transition: opacity 0.7s ease, transform 1.35s ease;
+  will-change: opacity, transform;
+}
+
+.product-media.has-scrub .pc-img.is-visible {
+  opacity: 1;
+  transform: scale(1);
+  z-index: 1;
+}
+
+.product-media.has-scrub.is-scrubbing .pc-img.is-visible {
+  transform: scale(1.04);
 }
 
 .pc-scrub {
@@ -962,16 +975,36 @@ body.nav-open .site-header .header-search input {
 }
 
 .pc-scrub-seg {
+  position: relative;
   flex: 1;
   height: 2px;
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.45);
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.35);
   box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.08);
-  transition: background 0.12s linear;
 }
 
-.pc-scrub-seg.is-active {
+.pc-scrub-seg::after {
+  content: "";
+  position: absolute;
+  inset: 0;
   background: #fff;
+  transform: scaleX(0);
+  transform-origin: left center;
+}
+
+.pc-scrub-seg.is-done::after {
+  transform: scaleX(1);
+  transition: none;
+}
+
+.pc-scrub-seg.is-active::after {
+  animation: pc-scrub-fill var(--pc-scrub-duration, 1.2s) linear forwards;
+}
+
+@keyframes pc-scrub-fill {
+  from { transform: scaleX(0); }
+  to { transform: scaleX(1); }
 }
 
 .pc-ph {
@@ -2482,6 +2515,14 @@ body.nav-open .site-header .header-search input {
   .ss-mark,
   .marquee-track {
     animation: none !important;
+  }
+  .product-media.has-scrub .pc-img {
+    transition: none !important;
+    transform: none !important;
+  }
+  .pc-scrub-seg.is-active::after {
+    animation: none !important;
+    transform: scaleX(1);
   }
 }
 

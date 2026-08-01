@@ -459,7 +459,7 @@
 
   // --- Product card gallery autoplay (hover / touch) ----------------------
   const scrubPrefetch = new Set();
-  const SCRUB_INTERVAL_MS = 850;
+  const SCRUB_INTERVAL_MS = 1200;
   let scrubActive = null;
   let scrubTimer = null;
   const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -481,19 +481,66 @@
     });
   }
 
-  function setScrubIndex(media, index) {
+  function updateScrubDots(media, index) {
+    media.querySelectorAll(".pc-scrub-seg").forEach((seg, n) => {
+      seg.classList.remove("is-active", "is-done");
+      // Retrigger fill animation cleanly.
+      void seg.offsetWidth;
+      if (n < index) seg.classList.add("is-done");
+      else if (n === index) seg.classList.add("is-active");
+    });
+  }
+
+  function setScrubIndex(media, index, { instant = false } = {}) {
     const urls = parseGallery(media);
     if (urls.length < 2) return;
     const i = ((index % urls.length) + urls.length) % urls.length;
-    if (media._scrubIndex === i) return;
+    if (!instant && media._scrubIndex === i) return;
+
+    const imgA = media.querySelector("[data-scrub-a]");
+    const imgB = media.querySelector("[data-scrub-b]");
+    if (!imgA || !imgB) return;
+
+    const url = urls[i];
     media._scrubIndex = i;
-    const img = media.querySelector("[data-scrub-img]");
-    if (img && img.getAttribute("src") !== urls[i]) {
-      img.setAttribute("src", urls[i]);
+    media.style.setProperty("--pc-scrub-duration", `${SCRUB_INTERVAL_MS}ms`);
+
+    if (instant || reduceMotion) {
+      imgA.src = url;
+      imgB.src = url;
+      imgA.classList.add("is-visible");
+      imgB.classList.remove("is-visible");
+      media._showingA = true;
+      updateScrubDots(media, i);
+      return;
     }
-    media.querySelectorAll(".pc-scrub-seg").forEach((seg, n) => {
-      seg.classList.toggle("is-active", n === i);
-    });
+
+    const showingA = media._showingA !== false;
+    const front = showingA ? imgA : imgB;
+    const back = showingA ? imgB : imgA;
+
+    const swap = () => {
+      back.classList.add("is-visible");
+      front.classList.remove("is-visible");
+      media._showingA = !showingA;
+      updateScrubDots(media, i);
+    };
+
+    if (back.getAttribute("src") === url) {
+      swap();
+      return;
+    }
+
+    back.onload = () => {
+      back.onload = null;
+      if (media._scrubIndex !== i) return;
+      swap();
+    };
+    back.src = url;
+    if (back.complete) {
+      back.onload = null;
+      swap();
+    }
   }
 
   function stopScrubTimer() {
@@ -512,11 +559,10 @@
     scrubActive = media;
     media.classList.add("is-scrubbing");
     prefetchGallery(urls);
-    setScrubIndex(media, 0);
+    setScrubIndex(media, 0, { instant: true });
 
     if (reduceMotion) return;
 
-    // Advance after a short beat so the first image is seen first.
     scrubTimer = setInterval(() => {
       if (!scrubActive) return;
       setScrubIndex(scrubActive, (scrubActive._scrubIndex || 0) + 1);
@@ -529,7 +575,7 @@
       scrubActive = null;
       return;
     }
-    setScrubIndex(media, 0);
+    setScrubIndex(media, 0, { instant: true });
     media.classList.remove("is-scrubbing");
     if (scrubActive === media) scrubActive = null;
   }
