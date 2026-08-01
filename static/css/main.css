@@ -926,32 +926,52 @@ body.nav-open .site-header .header-search input {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  transition: transform 0.9s var(--ease), opacity 0.6s var(--ease);
-}
-
-.pc-img--back {
-  opacity: 0;
-  transform: scale(1.06);
-}
-
-.product-card:hover .pc-img--front {
-  opacity: 0;
-  transform: scale(1.06);
-}
-
-.product-card:hover .pc-img--back {
-  opacity: 1;
-  transform: scale(1);
-}
-
-/* Single-image cards still zoom */
-.product-media:not(:has(.pc-img--back)) .pc-img--front {
   transition: transform 0.9s var(--ease);
 }
 
-.product-card:hover .product-media:not(:has(.pc-img--back)) .pc-img--front {
-  opacity: 1;
+/* Single-image cards gently zoom on hover */
+.product-media:not(.has-scrub) .pc-img--front {
+  transition: transform 0.9s var(--ease);
+}
+
+.product-card:hover .product-media:not(.has-scrub) .pc-img--front {
   transform: scale(1.06);
+}
+
+/* Gallery scrub: mouse/finger X position cycles images */
+.product-media.has-scrub .pc-img--front {
+  transition: none;
+}
+
+.pc-scrub {
+  position: absolute;
+  left: 8px;
+  right: 8px;
+  top: 8px;
+  display: flex;
+  gap: 3px;
+  z-index: 2;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.25s var(--ease);
+}
+
+.product-card:hover .pc-scrub,
+.product-media.is-scrubbing .pc-scrub {
+  opacity: 1;
+}
+
+.pc-scrub-seg {
+  flex: 1;
+  height: 2px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.45);
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.08);
+  transition: background 0.12s linear;
+}
+
+.pc-scrub-seg.is-active {
+  background: #fff;
 }
 
 .pc-ph {
@@ -1048,6 +1068,9 @@ body.nav-open .site-header .header-search input {
   .pc-actions {
     opacity: 1;
     transform: none;
+  }
+  .product-media.has-scrub .pc-scrub {
+    opacity: 0.85;
   }
 }
 

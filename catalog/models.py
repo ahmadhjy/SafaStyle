@@ -238,6 +238,21 @@ class Product(TimeStampedModel):
         return bool(self.base_sale_price)
 
     @property
+    def card_gallery_urls(self):
+        """Unique gallery image URLs in display order for product-card scrubbing."""
+        urls = []
+        seen = set()
+        for img in self.images.all():
+            if not img.image:
+                continue
+            url = img.image.url
+            if url in seen:
+                continue
+            seen.add(url)
+            urls.append(url)
+        return urls
+
+    @property
     def card_color_swatches(self):
         """Color swatches with image URLs for product gallery cards."""
         by_color = {}

@@ -457,6 +457,140 @@
     },
   };
 
+  // --- Product card gallery scrub (hover / touch) -------------------------
+  const scrubPrefetch = new Set();
+  let scrubActive = null;
+
+  function parseGallery(media) {
+    if (media._gallery) return media._gallery;
+    const raw = media.getAttribute("data-gallery") || "";
+    media._gallery = raw.split("|").map((s) => s.trim()).filter(Boolean);
+    return media._gallery;
+  }
+
+  function prefetchGallery(urls) {
+    urls.forEach((url) => {
+      if (!url || scrubPrefetch.has(url)) return;
+      scrubPrefetch.add(url);
+      const img = new Image();
+      img.decoding = "async";
+      img.src = url;
+    });
+  }
+
+  function setScrubIndex(media, index) {
+    const urls = parseGallery(media);
+    if (urls.length < 2) return;
+    const i = Math.max(0, Math.min(urls.length - 1, index));
+    if (media._scrubIndex === i) return;
+    media._scrubIndex = i;
+    const img = media.querySelector("[data-scrub-img]");
+    if (img && img.getAttribute("src") !== urls[i]) {
+      img.setAttribute("src", urls[i]);
+    }
+    media.querySelectorAll(".pc-scrub-seg").forEach((seg, n) => {
+      seg.classList.toggle("is-active", n === i);
+    });
+  }
+
+  function scrubAtPoint(media, clientX) {
+    const urls = parseGallery(media);
+    if (urls.length < 2) return;
+    const rect = media.getBoundingClientRect();
+    if (rect.width <= 0) return;
+    const x = Math.max(0, Math.min(rect.width - 0.001, clientX - rect.left));
+    const index = Math.floor((x / rect.width) * urls.length);
+    setScrubIndex(media, index);
+  }
+
+  function activateScrub(media) {
+    if (!media || scrubActive === media) return;
+    if (scrubActive) resetScrub(scrubActive);
+    scrubActive = media;
+    media.classList.add("is-scrubbing");
+    prefetchGallery(parseGallery(media));
+  }
+
+  function resetScrub(media) {
+    if (!media) return;
+    setScrubIndex(media, 0);
+    media.classList.remove("is-scrubbing");
+    if (scrubActive === media) scrubActive = null;
+  }
+
+  function mediaFromPoint(clientX, clientY) {
+    const el = document.elementFromPoint(clientX, clientY);
+    if (!el || !el.closest) return null;
+    // Ignore when finger/cursor is on card action buttons
+    if (el.closest(".pc-actions")) return null;
+    return el.closest(".product-media.has-scrub[data-gallery]");
+  }
+
+  document.addEventListener(
+    "pointermove",
+    (e) => {
+      if (e.pointerType === "touch") return; // handled via touchmove (works during scroll)
+      const media = mediaFromPoint(e.clientX, e.clientY);
+      if (!media) {
+        if (scrubActive) resetScrub(scrubActive);
+        return;
+      }
+      activateScrub(media);
+      scrubAtPoint(media, e.clientX);
+    },
+    { passive: true }
+  );
+
+  document.documentElement.addEventListener("mouseleave", () => {
+    if (scrubActive) resetScrub(scrubActive);
+  });
+
+  // Touch: map finger X across the image, including while the page scrolls.
+  document.addEventListener(
+    "touchstart",
+    (e) => {
+      const t = e.touches[0];
+      if (!t) return;
+      const media = mediaFromPoint(t.clientX, t.clientY);
+      if (!media) return;
+      activateScrub(media);
+      scrubAtPoint(media, t.clientX);
+    },
+    { passive: true }
+  );
+
+  document.addEventListener(
+    "touchmove",
+    (e) => {
+      const t = e.touches[0];
+      if (!t) return;
+      const media = mediaFromPoint(t.clientX, t.clientY);
+      if (!media) {
+        if (scrubActive) resetScrub(scrubActive);
+        return;
+      }
+      activateScrub(media);
+      scrubAtPoint(media, t.clientX);
+    },
+    { passive: true }
+  );
+
+  document.addEventListener(
+    "touchend",
+    () => {
+      if (scrubActive) resetScrub(scrubActive);
+    },
+    { passive: true }
+  );
+
+  document.addEventListener(
+    "touchcancel",
+    () => {
+      if (scrubActive) resetScrub(scrubActive);
+    },
+    { passive: true }
+  );
+
   // --- Wire up product cards ----------------------------------------------
   document.addEventListener("click", (e) => {
     const quickBtn = e.target.closest("[data-quick]");
