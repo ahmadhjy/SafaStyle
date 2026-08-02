@@ -1,6 +1,9 @@
+import threading
+import uuid
 from decimal import Decimal
 
 from django.contrib import messages
+from django.db import transaction
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.http import require_POST
@@ -11,6 +14,22 @@ from .cart import Cart
 from .emails import send_order_emails
 from .forms import CheckoutForm
 from .models import Governorate, OrderItem
+
+CHECKOUT_TOKEN_KEY = "checkout_token"
+
+
+def _send_order_emails_async(order):
+    """Send order emails off the request thread so checkout never hangs on SMTP."""
+
+    def _worker():
+        from django.db import connection
+
+        try:
+            send_order_emails(order)
+        finally:
+            connection.close()
+
+    threading.Thread(target=_worker, daemon=True).start()
 
 
 def _is_ajax(request):
@@ -127,9 +146,6 @@ def cart_remove(request, variation_id):
 
 def checkout(request):
     cart = Cart(request)
-    if len(cart) == 0:
-        messages.warning(request, "Your bag is empty.")
-        return redirect("catalog:shop")
 
     profile = None
     if request.user.is_authenticated:
@@ -138,44 +154,74 @@ def checkout(request):
         profile, _ = CustomerProfile.objects.get_or_create(user=request.user)
 
     if request.method == "POST":
+        # Guard against duplicate submissions (double-click, impatient resubmit,
+        # or refreshing the POST). Each rendered checkout form carries a one-time
+        # token; once it's used we won't create a second order for it.
+        submitted_token = request.POST.get("checkout_token", "")
+        session_token = request.session.get(CHECKOUT_TOKEN_KEY)
+        if not submitted_token or submitted_token != session_token:
+            last = request.session.get("last_order_number")
+            if last:
+                return redirect("orders:success", order_number=last)
+            messages.info(request, "This order was already submitted.")
+            return redirect("catalog:shop")
+
+        if len(cart) == 0:
+            messages.warning(request, "Your bag is empty.")
+            return redirect("catalog:shop")
+
         form = CheckoutForm(request.POST)
         if form.is_valid():
-            order = form.save(commit=False)
-            if request.user.is_authenticated:
-                order.user = request.user
-            order.subtotal = cart.subtotal
-            delivery_fee = Decimal("0")
-            if order.country == "Lebanon" and order.governorate:
-                delivery_fee = order.governorate.delivery_fee
-            else:
-                order.governorate = None
-            order.delivery_fee = delivery_fee
-            order.total = cart.subtotal + delivery_fee
-            order.payment_method = "cod"
-            order.save()
-            if profile is not None:
-                profile.update_from_order(order)
-            for item in cart:
-                OrderItem.objects.create(
-                    order=order,
-                    product_name=item["name"],
-                    variation_label=item.get("label", ""),
-                    sku=item.get("sku", ""),
-                    unit_price=item["price"],
-                    quantity=item["qty"],
-                    line_total=item["total"],
-                    variation=item.get("variation"),
-                )
-                variation = item.get("variation")
-                if variation and variation.stock >= item["qty"]:
-                    variation.stock -= item["qty"]
-                    variation.save(update_fields=["stock", "updated_at"])
+            # Consume the token immediately so a near-simultaneous second POST
+            # can't create a twin order.
+            request.session.pop(CHECKOUT_TOKEN_KEY, None)
+
+            with transaction.atomic():
+                order = form.save(commit=False)
+                if request.user.is_authenticated:
+                    order.user = request.user
+                order.subtotal = cart.subtotal
+                delivery_fee = Decimal("0")
+                if order.country == "Lebanon" and order.governorate:
+                    delivery_fee = order.governorate.delivery_fee
+                else:
+                    order.governorate = None
+                order.delivery_fee = delivery_fee
+                order.total = cart.subtotal + delivery_fee
+                order.payment_method = "cod"
+                order.save()
+                if profile is not None:
+                    profile.update_from_order(order)
+                for item in cart:
+                    OrderItem.objects.create(
+                        order=order,
+                        product_name=item["name"],
+                        variation_label=item.get("label", ""),
+                        sku=item.get("sku", ""),
+                        unit_price=item["price"],
+                        quantity=item["qty"],
+                        line_total=item["total"],
+                        variation=item.get("variation"),
+                    )
+                    variation = item.get("variation")
+                    if variation and variation.stock >= item["qty"]:
+                        variation.stock -= item["qty"]
+                        variation.save(update_fields=["stock", "updated_at"])
+
             cart.clear()
-            send_order_emails(order)
+            request.session["last_order_number"] = order.order_number
+            _send_order_emails_async(order)
             return redirect("orders:success", order_number=order.order_number)
     else:
+        if len(cart) == 0:
+            messages.warning(request, "Your bag is empty.")
+            return redirect("catalog:shop")
         initial = profile.checkout_initial() if profile is not None else None
         form = CheckoutForm(initial=initial)
+
+    # Issue a fresh one-time token for this render.
+    checkout_token = uuid.uuid4().hex
+    request.session[CHECKOUT_TOKEN_KEY] = checkout_token
 
     governorates = list(
         Governorate.objects.filter(is_active=True).values("id", "name", "delivery_fee")
@@ -188,6 +234,7 @@ def checkout(request):
             "form": form,
             "cart": cart,
             "governorates_json": governorates,
+            "checkout_token": checkout_token,
         },
     )
 

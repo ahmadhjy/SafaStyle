@@ -62,5 +62,21 @@
   countryEl?.addEventListener("change", syncGovernorateField);
   govEl?.addEventListener("change", updateTotals);
 
+  // Prevent duplicate orders from double-clicks / impatient resubmits.
+  const placeBtn = form.querySelector("[data-place-order]");
+  let submitting = false;
+  form.addEventListener("submit", (e) => {
+    if (submitting) {
+      e.preventDefault();
+      return;
+    }
+    submitting = true;
+    if (placeBtn) {
+      placeBtn.disabled = true;
+      placeBtn.dataset.label = placeBtn.textContent;
+      placeBtn.textContent = "Placing your order…";
+    }
+  });
+
   syncGovernorateField();
 })();

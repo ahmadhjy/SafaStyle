@@ -9,6 +9,7 @@
     <h1>Billing details</h1>
     <form method="post" novalidate id="checkout-form">
       {% csrf_token %}
+      <input type="hidden" name="checkout_token" value="{{ checkout_token }}">
       <div class="form-grid">
         <div class="field">
           <label for="id_first_name">First name *</label>
@@ -63,7 +64,7 @@
         </div>
       </div>
       <div style="margin-top:1.5rem">
-        <button type="submit" class="btn btn-gold btn-block">Place order</button>
+        <button type="submit" class="btn btn-gold btn-block" data-place-order>Place order</button>
       </div>
     </form>
   </div>
