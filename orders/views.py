@@ -13,7 +13,7 @@ from catalog.models import Product, ProductVariation
 from .cart import Cart
 from .emails import send_order_emails
 from .forms import CheckoutForm
-from .models import Governorate, OrderItem
+from .models import DeliveryLocality, Governorate, OrderItem
 
 CHECKOUT_TOKEN_KEY = "checkout_token"
 
@@ -226,6 +226,11 @@ def checkout(request):
     governorates = list(
         Governorate.objects.filter(is_active=True).values("id", "name", "delivery_fee")
     )
+    localities = list(
+        DeliveryLocality.objects.filter(is_active=True, governorate__is_active=True)
+        .order_by("name")
+        .values("id", "name", "governorate_id")
+    )
 
     return render(
         request,
@@ -234,6 +239,7 @@ def checkout(request):
             "form": form,
             "cart": cart,
             "governorates_json": governorates,
+            "localities_json": localities,
             "checkout_token": checkout_token,
         },
     )

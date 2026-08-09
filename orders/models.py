@@ -33,7 +33,10 @@ class Order(models.Model):
     country = models.CharField(max_length=100, default="Lebanon")
     street_address = models.CharField(max_length=255)
     apartment = models.CharField(max_length=255, blank=True)
-    city = models.CharField(max_length=120)
+    city = models.CharField(
+        max_length=120,
+        help_text="Town / city name (copied from locality for Lebanon checkouts).",
+    )
     postcode = models.CharField(max_length=40, blank=True)
     phone = models.CharField(max_length=40)
     email = models.EmailField(blank=True)
@@ -41,6 +44,15 @@ class Order(models.Model):
 
     governorate = models.ForeignKey(
         "Governorate",
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="orders",
+    )
+    # Optional structured locality for new Lebanon orders. Older orders keep
+    # free-text city only (locality stays null) so existing data is untouched.
+    locality = models.ForeignKey(
+        "DeliveryLocality",
         null=True,
         blank=True,
         on_delete=models.SET_NULL,
@@ -121,3 +133,30 @@ class Governorate(models.Model):
 
     def __str__(self):
         return self.name
+
+
+class DeliveryLocality(models.Model):
+    """City / town / neighborhood used to lock delivery governorate at checkout."""
+
+    name = models.CharField(max_length=120)
+    governorate = models.ForeignKey(
+        Governorate,
+        on_delete=models.CASCADE,
+        related_name="localities",
+    )
+    is_active = models.BooleanField(default=True)
+    sort_order = models.PositiveIntegerField(default=0)
+
+    class Meta:
+        ordering = ["name"]
+        verbose_name = "Delivery locality"
+        verbose_name_plural = "Delivery localities"
+        constraints = [
+            models.UniqueConstraint(
+                fields=["name", "governorate"],
+                name="unique_locality_name_per_governorate",
+            )
+        ]
+
+    def __str__(self):
+        return f"{self.name} ({self.governorate.name})"

@@ -1,0 +1,27 @@
+/* Make order address fields readable without horizontal scrubbing. */
+.order-full-address {
+  white-space: pre-wrap;
+  line-height: 1.5;
+  max-width: 48rem;
+  padding: 0.75rem 0.9rem;
+  background: #f8f5f0;
+  border: 1px solid #e5ddd0;
+  border-radius: 6px;
+  font-size: 0.95rem;
+}
+
+.change-form .form-row .order-address-field,
+.change-form .form-row textarea.order-address-field,
+.change-form .form-row input.order-address-field {
+  width: 100% !important;
+  max-width: 48rem !important;
+  box-sizing: border-box;
+}
+
+.change-form .form-row textarea.order-address-field {
+  min-height: 3.5em;
+  resize: vertical;
+  overflow: hidden;
+  line-height: 1.45;
+  field-sizing: content;
+}

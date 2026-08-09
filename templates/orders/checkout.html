@@ -27,13 +27,48 @@
           <label for="id_country">Country / Region *</label>
           {{ form.country }}
         </div>
+
+        {# Lebanon: searchable town/city list drives the governorate + fee #}
+        <div class="field full" id="locality-field" hidden>
+          <label for="locality-search">Town / City / Neighborhood *</label>
+          <div class="locality-combobox" data-locality-combobox>
+            <input
+              type="text"
+              id="locality-search"
+              class="field-input"
+              placeholder="Start typing to search…"
+              autocomplete="off"
+              spellcheck="false"
+              role="combobox"
+              aria-autocomplete="list"
+              aria-expanded="false"
+              aria-controls="locality-listbox"
+              data-locality-search
+            >
+            {{ form.locality }}
+            <ul
+              id="locality-listbox"
+              class="locality-list"
+              role="listbox"
+              hidden
+              data-locality-list
+            ></ul>
+          </div>
+          <p class="field-hint">Select your area from the list — delivery fee follows your town.</p>
+          {% if form.locality.errors %}
+            <p class="field-error">{{ form.locality.errors.0 }}</p>
+          {% endif %}
+        </div>
+
         <div class="field full" id="governorate-field" hidden>
-          <label for="id_governorate">Governorate *</label>
+          <label for="id_governorate">Governorate</label>
           {{ form.governorate }}
+          <p class="field-hint">Set automatically from your town / city.</p>
           {% if form.governorate.errors %}
             <p class="field-error">{{ form.governorate.errors.0 }}</p>
           {% endif %}
         </div>
+
         <div class="field full">
           <label for="id_street_address">Street address *</label>
           {{ form.street_address }}
@@ -42,10 +77,16 @@
           <label class="sr-only" for="id_apartment">Apartment</label>
           {{ form.apartment }}
         </div>
-        <div class="field full">
+
+        {# Free-text city for non-Lebanon countries only #}
+        <div class="field full" id="city-field">
           <label for="id_city">Town / City *</label>
           {{ form.city }}
+          {% if form.city.errors %}
+            <p class="field-error">{{ form.city.errors.0 }}</p>
+          {% endif %}
         </div>
+
         <div class="field full">
           <label for="id_postcode">Postcode / ZIP (optional)</label>
           {{ form.postcode }}
@@ -99,6 +140,7 @@
 
 {% block extra_js %}
 {{ governorates_json|json_script:"checkout-governorates" }}
+{{ localities_json|json_script:"checkout-localities" }}
 <script>
   window.CHECKOUT_SUBTOTAL = Number("{{ cart.subtotal }}");
 </script>
