@@ -103,6 +103,34 @@
           <label for="id_order_notes">Additional information</label>
           {{ form.order_notes }}
         </div>
+
+        <div class="field full" id="payment-method-field">
+          <label>Payment method *</label>
+          <div class="payment-options" data-payment-options>
+            {% for value, label in form.payment_method.field.choices %}
+              <label class="payment-option" {% if value == "whish" %}data-whish-option hidden{% endif %}>
+                <input
+                  type="radio"
+                  name="payment_method"
+                  value="{{ value }}"
+                  {% if form.payment_method.value == value or forloop.first and not form.payment_method.value %}checked{% endif %}
+                  data-payment-method
+                >
+                <span>
+                  <strong>{{ label }}</strong>
+                  {% if value == "cod" %}
+                    <small>Pay with cash upon delivery.</small>
+                  {% elif value == "whish" %}
+                    <small>Pay from your Whish balance (Lebanon only).{% if allow_whish %} <em>Admin test mode</em>{% endif %}</small>
+                  {% endif %}
+                </span>
+              </label>
+            {% endfor %}
+          </div>
+          {% if form.payment_method.errors %}
+            <p class="field-error">{{ form.payment_method.errors.0 }}</p>
+          {% endif %}
+        </div>
       </div>
       <div style="margin-top:1.5rem">
         <button type="submit" class="btn btn-gold btn-block" data-place-order>Place order</button>
@@ -126,9 +154,9 @@
       <span>Total</span>
       <strong id="checkout-total">${{ cart.subtotal }}</strong>
     </div>
-    <div class="payment-note">
-      <strong>Cash on delivery</strong><br>
-      Pay with cash upon delivery.
+    <div class="payment-note" id="payment-summary">
+      <strong data-payment-summary-title>Cash on delivery</strong><br>
+      <span data-payment-summary-text>Pay with cash upon delivery.</span>
     </div>
     <p class="payment-note">
       Your personal data will be used to process your order and for other purposes described in our
@@ -143,6 +171,7 @@
 {{ localities_json|json_script:"checkout-localities" }}
 <script>
   window.CHECKOUT_SUBTOTAL = Number("{{ cart.subtotal }}");
+  window.CHECKOUT_ALLOW_WHISH = {{ allow_whish|yesno:"true,false" }};
 </script>
 <script src="{% static 'js/checkout.js' %}?v={{ static_version }}" defer></script>
 {% endblock %}

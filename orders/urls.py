@@ -12,4 +12,24 @@ urlpatterns = [
     path("cart/remove/<int:variation_id>/", views.cart_remove, name="cart_remove"),
     path("checkout/", views.checkout, name="checkout"),
     path("order/<str:order_number>/", views.order_success, name="success"),
+    path(
+        "payments/whish/callback/success/",
+        views.whish_callback_success,
+        name="whish_callback_success",
+    ),
+    path(
+        "payments/whish/callback/failure/",
+        views.whish_callback_failure,
+        name="whish_callback_failure",
+    ),
+    path(
+        "payments/whish/return/success/<str:order_number>/",
+        views.whish_redirect_success,
+        name="whish_redirect_success",
+    ),
+    path(
+        "payments/whish/return/failure/<str:order_number>/",
+        views.whish_redirect_failure,
+        name="whish_redirect_failure",
+    ),
 ]

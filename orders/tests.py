@@ -1,6 +1,8 @@
 from decimal import Decimal
+from unittest.mock import patch
 
-from django.test import TestCase
+from django.contrib.auth import get_user_model
+from django.test import TestCase, override_settings
 from django.urls import reverse
 
 from catalog.models import Product, ProductVariation
@@ -50,6 +52,7 @@ class DuplicateOrderTests(TestCase):
             "street_address": "Main St",
             "city": "ignored-for-lebanon",
             "phone": "71599118",
+            "payment_method": "cod",
         }
 
     def _get_token(self):
@@ -136,6 +139,7 @@ class LocalityDeliveryFeeTests(TestCase):
                 "street_address": "Street 1",
                 "city": "Beirut",  # tampered free text
                 "phone": "70123456",
+                "payment_method": "cod",
             },
         )
         self.assertEqual(resp.status_code, 302)
@@ -159,6 +163,7 @@ class LocalityDeliveryFeeTests(TestCase):
                 "street_address": "Street 1",
                 "city": "Hamra",
                 "phone": "70123456",
+                "payment_method": "cod",
             },
         )
         self.assertEqual(resp.status_code, 200)
@@ -183,3 +188,101 @@ class LocalityDeliveryFeeTests(TestCase):
         self.assertIsNone(order.locality_id)
         self.assertEqual(order.city, "Dahye")
         self.assertEqual(Order.objects.filter(pk=order.pk).count(), 1)
+
+
+@override_settings(
+    WHISH_PAY_ENABLED=True,
+    WHISH_PAY_ADMIN_ONLY=True,
+    WHISH_CHANNEL="test-channel",
+    WHISH_SECRET="test-secret",
+    WHISH_WEBSITE_URL="safastyle.com",
+    WHISH_API_BASE="https://partner.api.sbx.whish.money/itel-service/api",
+    SITE_URL="https://safastyle.com",
+)
+class WhishPayCheckoutTests(TestCase):
+    def setUp(self):
+        User = get_user_model()
+        self.staff = User.objects.create_user(
+            username="admin_tester", password="pass", is_staff=True
+        )
+        self.customer = User.objects.create_user(
+            username="customer", password="pass", is_staff=False
+        )
+        self.product = Product.objects.create(
+            name="Whish Set", slug="whish-set", base_price=Decimal("20.00")
+        )
+        self.variation = ProductVariation.objects.create(
+            product=self.product, price=Decimal("20.00"), stock=5
+        )
+        self.beirut, _ = Governorate.objects.get_or_create(
+            name="Beirut",
+            defaults={"delivery_fee": Decimal("4.00"), "is_active": True},
+        )
+        self.hamra, _ = DeliveryLocality.objects.get_or_create(
+            name="Hamra", governorate=self.beirut, defaults={"is_active": True}
+        )
+        self.checkout_url = reverse("orders:checkout")
+
+    def _payload(self, token, method="whish"):
+        return {
+            "checkout_token": token,
+            "first_name": "Admin",
+            "last_name": "Tester",
+            "country": "Lebanon",
+            "governorate": self.beirut.id,
+            "locality": self.hamra.id,
+            "street_address": "Test St",
+            "city": "Hamra",
+            "phone": "70111111",
+            "payment_method": method,
+        }
+
+    def test_regular_customer_cannot_use_whish(self):
+        self.client.login(username="customer", password="pass")
+        self.client.post(reverse("orders:cart_add", args=[self.variation.id]))
+        self.client.get(self.checkout_url)
+        token = self.client.session["checkout_token"]
+        resp = self.client.post(self.checkout_url, self._payload(token, "whish"))
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(Order.objects.count(), 0)
+
+    @patch("orders.views.create_payment", return_value="https://whish.money/pay/test")
+    def test_staff_whish_checkout_redirects_to_collect_url(self, _mock_create):
+        self.client.login(username="admin_tester", password="pass")
+        self.client.post(reverse("orders:cart_add", args=[self.variation.id]))
+        self.client.get(self.checkout_url)
+        token = self.client.session["checkout_token"]
+        resp = self.client.post(self.checkout_url, self._payload(token, "whish"))
+        self.assertEqual(resp.status_code, 302)
+        self.assertEqual(resp.url, "https://whish.money/pay/test")
+        order = Order.objects.get()
+        self.assertEqual(order.payment_method, Order.PaymentMethod.WHISH)
+        self.assertEqual(order.payment_status, Order.PaymentStatus.AWAITING)
+        self.assertTrue(order.whish_external_id)
+        self.assertEqual(order.whish_collect_url, "https://whish.money/pay/test")
+        # Stock held until Whish confirms payment.
+        self.variation.refresh_from_db()
+        self.assertEqual(self.variation.stock, 5)
+
+    @patch("orders.views.reconcile_whish_payment")
+    def test_success_callback_reconciles(self, mock_reconcile):
+        order = Order.objects.create(
+            first_name="A",
+            last_name="B",
+            country="Lebanon",
+            street_address="S",
+            city="Hamra",
+            phone="70111111",
+            payment_method=Order.PaymentMethod.WHISH,
+            payment_status=Order.PaymentStatus.AWAITING,
+            whish_external_id="abc123",
+            subtotal=Decimal("20"),
+            delivery_fee=Decimal("4"),
+            total=Decimal("24"),
+        )
+        mock_reconcile.return_value = (order, "success")
+        url = reverse("orders:whish_callback_success")
+        resp = self.client.get(url, {"externalId": "abc123", "order": order.order_number})
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(resp.content, b"ok")
+        mock_reconcile.assert_called_once()

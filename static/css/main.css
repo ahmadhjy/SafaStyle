@@ -1949,6 +1949,42 @@ body.nav-open .site-header .header-search input {
   font-size: 0.9rem;
 }
 
+.payment-options {
+  display: grid;
+  gap: 0.65rem;
+}
+
+.payment-option {
+  display: flex;
+  gap: 0.75rem;
+  align-items: flex-start;
+  padding: 0.85rem 0.95rem;
+  border: 1px solid var(--line);
+  background: #fff;
+  cursor: pointer;
+}
+
+.payment-option input {
+  margin-top: 0.2rem;
+  width: auto;
+}
+
+.payment-option span {
+  display: grid;
+  gap: 0.2rem;
+}
+
+.payment-option small {
+  color: var(--ink-soft);
+  font-size: 0.85rem;
+  line-height: 1.35;
+}
+
+.payment-option em {
+  font-style: normal;
+  color: var(--gold-ink, #8a6a2f);
+}
+
 .form-grid .full {
   grid-column: 1 / -1;
 }

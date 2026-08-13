@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+
+{% block title %}Payment not completed — {{ site.store_name }}{% endblock %}
+
+{% block content %}
+<div class="container empty-state">
+  <p class="eyebrow">Whish Pay</p>
+  <h1>Payment not completed</h1>
+  <p>
+    We couldn’t confirm payment for order <strong>{{ order.order_number }}</strong> yet.
+    {% if collect_status == "pending" or not collect_status %}
+      You can try again on the same Whish payment link.
+    {% elif collect_status == "failed" %}
+      This payment link has expired. Please place the order again from checkout.
+    {% endif %}
+  </p>
+  {% if order.whish_collect_url and order.payment_status != "failed" and order.payment_status != "paid" %}
+    <p style="margin-top:1rem">
+      <a class="btn btn-gold" href="{{ order.whish_collect_url }}">Try Whish Pay again</a>
+    </p>
+  {% endif %}
+  <p style="margin-top:1.25rem">
+    <a class="btn btn-ghost" href="{% url 'orders:checkout' %}">Back to checkout</a>
+  </p>
+</div>
+{% endblock %}

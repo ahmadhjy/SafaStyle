@@ -10,6 +10,12 @@ class CheckoutForm(forms.ModelForm):
         required=False,
         widget=forms.HiddenInput(attrs={"data-locality-id": "1"}),
     )
+    payment_method = forms.ChoiceField(
+        choices=[(Order.PaymentMethod.COD, "Cash on delivery")],
+        initial=Order.PaymentMethod.COD,
+        widget=forms.RadioSelect,
+        required=True,
+    )
 
     class Meta:
         model = Order
@@ -27,6 +33,7 @@ class CheckoutForm(forms.ModelForm):
             "phone",
             "email",
             "order_notes",
+            "payment_method",
         ]
         widgets = {
             "first_name": forms.TextInput(attrs={"placeholder": "First name", "required": True}),
@@ -60,7 +67,8 @@ class CheckoutForm(forms.ModelForm):
             ),
         }
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, allow_whish=False, **kwargs):
+        self.allow_whish = allow_whish
         super().__init__(*args, **kwargs)
         self.fields["governorate"].queryset = Governorate.objects.filter(is_active=True)
         self.fields["governorate"].empty_label = "Select governorate"
@@ -72,6 +80,11 @@ class CheckoutForm(forms.ModelForm):
             .order_by("name")
         )
         self.fields["locality"].required = False
+
+        choices = [(Order.PaymentMethod.COD, "Cash on delivery")]
+        if allow_whish:
+            choices.append((Order.PaymentMethod.WHISH, "Whish Pay (Lebanon)"))
+        self.fields["payment_method"].choices = choices
 
         self.fields["first_name"].required = True
         self.fields["last_name"].required = True
@@ -85,6 +98,8 @@ class CheckoutForm(forms.ModelForm):
         self.fields["postcode"].required = False
         self.fields["order_notes"].required = False
         for name, field in self.fields.items():
+            if name == "payment_method":
+                continue
             field.widget.attrs.setdefault("class", "field-input")
             if field.required:
                 field.widget.attrs["required"] = True
@@ -94,6 +109,7 @@ class CheckoutForm(forms.ModelForm):
         country = (cleaned.get("country") or "").strip()
         locality = cleaned.get("locality")
         city = (cleaned.get("city") or "").strip()
+        payment_method = cleaned.get("payment_method") or Order.PaymentMethod.COD
 
         if country == "Lebanon":
             if not locality:
@@ -114,4 +130,18 @@ class CheckoutForm(forms.ModelForm):
                 self.add_error("city", "Please enter your town / city.")
             else:
                 cleaned["city"] = city
+
+        if payment_method == Order.PaymentMethod.WHISH:
+            if not self.allow_whish:
+                self.add_error(
+                    "payment_method",
+                    "Whish Pay is not available for this account yet.",
+                )
+            elif country != "Lebanon":
+                self.add_error(
+                    "payment_method",
+                    "Whish Pay is only available for deliveries in Lebanon.",
+                )
+
+        cleaned["payment_method"] = payment_method
         return cleaned

@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+
+{% block title %}Confirming payment — {{ site.store_name }}{% endblock %}
+
+{% block content %}
+<div class="container empty-state">
+  <p class="eyebrow">Whish Pay</p>
+  <h1>Confirming your payment</h1>
+  <p>
+    Order <strong>{{ order.order_number }}</strong> is being verified with Whish.
+    This usually takes a few seconds.
+  </p>
+  {% if order.whish_collect_url and order.payment_status != "paid" %}
+    <p style="margin-top:1rem">
+      <a class="btn btn-gold" href="{{ order.whish_collect_url }}">Return to Whish payment</a>
+    </p>
+  {% endif %}
+  <p style="margin-top:1.25rem">
+    <a class="btn btn-ghost" href="{% url 'orders:success' order.order_number %}">View order status</a>
+  </p>
+</div>
+{% endblock %}

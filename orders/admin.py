@@ -119,10 +119,18 @@ class OrderAdmin(admin.ModelAdmin):
         "city",
         "governorate",
         "status",
+        "payment_method",
+        "payment_status",
         "total",
         "created_at",
     )
-    list_filter = ("status", "payment_method", "created_at", "governorate")
+    list_filter = (
+        "status",
+        "payment_method",
+        "payment_status",
+        "created_at",
+        "governorate",
+    )
     search_fields = (
         "order_number",
         "first_name",
@@ -132,6 +140,7 @@ class OrderAdmin(admin.ModelAdmin):
         "city",
         "street_address",
         "apartment",
+        "whish_external_id",
     )
     list_editable = ("status",)
     readonly_fields = (
@@ -142,12 +151,28 @@ class OrderAdmin(admin.ModelAdmin):
         "delivery_fee",
         "total",
         "full_address_display",
+        "whish_external_id",
+        "whish_collect_url",
+        "whish_payer_phone",
+        "paid_at",
     )
     raw_id_fields = ("user",)
     autocomplete_fields = ("locality", "governorate")
     inlines = [OrderItemInline]
     fieldsets = (
-        ("Order", {"fields": ("order_number", "user", "status", "payment_method", "created_at")}),
+        (
+            "Order",
+            {
+                "fields": (
+                    "order_number",
+                    "user",
+                    "status",
+                    "payment_method",
+                    "payment_status",
+                    "created_at",
+                )
+            },
+        ),
         (
             "Customer",
             {
@@ -173,6 +198,18 @@ class OrderAdmin(admin.ModelAdmin):
                     "city",
                     "postcode",
                 )
+            },
+        ),
+        (
+            "Whish Pay",
+            {
+                "classes": ("collapse",),
+                "fields": (
+                    "whish_external_id",
+                    "whish_collect_url",
+                    "whish_payer_phone",
+                    "paid_at",
+                ),
             },
         ),
         (

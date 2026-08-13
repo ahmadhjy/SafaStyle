@@ -7,7 +7,14 @@
   <p class="eyebrow">Thank you</p>
   <h1>Order placed</h1>
   <p>Your order <strong>{{ order.order_number }}</strong> is confirmed. We’ll contact you on {{ order.phone }}.</p>
-  <p style="color:var(--muted)">Total: ${{ order.total }} · Cash on delivery</p>
+  <p style="color:var(--muted)">
+    Total: ${{ order.total }}
+    {% if order.payment_method == "whish" %}
+      · Paid with Whish Pay
+    {% else %}
+      · Cash on delivery
+    {% endif %}
+  </p>
   <a class="btn btn-gold" href="{% url 'catalog:shop' %}">Continue shopping</a>
 </div>
 {% endblock %}

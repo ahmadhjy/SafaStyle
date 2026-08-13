@@ -168,6 +168,45 @@
     updateTotals();
   }
 
+  const allowWhish = !!window.CHECKOUT_ALLOW_WHISH;
+  const whishOption = form.querySelector("[data-whish-option]");
+  const paymentSummaryTitle = form.closest(".checkout-grid")?.querySelector(
+    "[data-payment-summary-title]"
+  ) || document.querySelector("[data-payment-summary-title]");
+  const paymentSummaryText =
+    document.querySelector("[data-payment-summary-text]");
+
+  function selectedPaymentMethod() {
+    const checked = form.querySelector('input[name="payment_method"]:checked');
+    return checked ? checked.value : "cod";
+  }
+
+  function syncPaymentUI() {
+    const lebanon = isLebanon();
+    const showWhish = allowWhish && lebanon;
+    if (whishOption) {
+      whishOption.hidden = !showWhish;
+      if (!showWhish) {
+        const whishRadio = whishOption.querySelector('input[type="radio"]');
+        if (whishRadio && whishRadio.checked) {
+          const cod = form.querySelector('input[name="payment_method"][value="cod"]');
+          if (cod) cod.checked = true;
+        }
+      }
+    }
+    const method = selectedPaymentMethod();
+    if (paymentSummaryTitle && paymentSummaryText) {
+      if (method === "whish") {
+        paymentSummaryTitle.textContent = "Whish Pay";
+        paymentSummaryText.textContent =
+          "You’ll be redirected to Whish to pay from your balance (Lebanon).";
+      } else {
+        paymentSummaryTitle.textContent = "Cash on delivery";
+        paymentSummaryText.textContent = "Pay with cash upon delivery.";
+      }
+    }
+  }
+
   function syncCountryFields() {
     const lebanon = isLebanon();
     if (localityField) localityField.hidden = !lebanon;
@@ -195,8 +234,13 @@
         setGovernorate(govEl ? govEl.value : "");
       }
     }
+    syncPaymentUI();
     updateTotals();
   }
+
+  form.querySelectorAll('input[name="payment_method"]').forEach((el) => {
+    el.addEventListener("change", syncPaymentUI);
+  });
 
   // Restore selected locality label after validation errors.
   if (localityIdEl && localityIdEl.value && searchEl) {

@@ -113,7 +113,7 @@ STATIC_URL = "/static/"
 STATICFILES_DIRS = [BASE_DIR / "static"]
 STATIC_ROOT = BASE_DIR / "staticfiles"
 # Bump when CSS/JS changes so browsers fetch fresh files (nginx caches /static/ 30 days).
-STATIC_CACHE_VERSION = "30"
+STATIC_CACHE_VERSION = "31"
 STORAGES = {
     "default": {"BACKEND": "django.core.files.storage.FileSystemStorage"},
     "staticfiles": {
@@ -207,6 +207,25 @@ CONTACT_EMAIL = os.environ.get("CONTACT_EMAIL", "info@safastyle.com")
 
 # SEO / production (override via .env on the droplet)
 SITE_URL = os.environ.get("SITE_URL", "https://safastyle.com")
+
+# Whish Pay (credentials in .env — never commit secrets)
+WHISH_PAY_ENABLED = os.environ.get("WHISH_PAY_ENABLED", "false").lower() == "true"
+# During testing, only staff/admin users see and can use Whish Pay.
+WHISH_PAY_ADMIN_ONLY = os.environ.get("WHISH_PAY_ADMIN_ONLY", "true").lower() == "true"
+WHISH_API_BASE = os.environ.get(
+    "WHISH_API_BASE",
+    "https://partner.api.sbx.whish.money/itel-service/api",
+).rstrip("/")
+WHISH_CHANNEL = os.environ.get("WHISH_CHANNEL", "")
+WHISH_SECRET = os.environ.get("WHISH_SECRET", "")
+# Exact value issued by Whish (no https:// unless they say so).
+WHISH_WEBSITE_URL = os.environ.get("WHISH_WEBSITE_URL", "safastyle.com")
+WHISH_CURRENCY = os.environ.get("WHISH_CURRENCY", "USD")
+WHISH_USER_AGENT = os.environ.get(
+    "WHISH_USER_AGENT",
+    "SafaStyle/1.0 (https://safastyle.com; info@safastyle.com)",
+)
+WHISH_TIMEOUT = int(os.environ.get("WHISH_TIMEOUT", "30"))
 
 # WooCommerce import (Bluehost temp URL while DNS points at Django)
 WOO_BASE_URL = os.environ.get("WOO_BASE_URL", "https://safastyle.com").rstrip("/")

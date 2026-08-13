@@ -14,6 +14,17 @@ class Order(models.Model):
         DELIVERED = "delivered", "Delivered"
         CANCELLED = "cancelled", "Cancelled"
 
+    class PaymentMethod(models.TextChoices):
+        COD = "cod", "Cash on delivery"
+        WHISH = "whish", "Whish Pay"
+
+    class PaymentStatus(models.TextChoices):
+        NOT_REQUIRED = "not_required", "Not required"  # COD
+        AWAITING = "awaiting", "Awaiting payment"
+        PAID = "paid", "Paid"
+        FAILED = "failed", "Failed / expired"
+        REFUNDED = "refunded", "Refunded"
+
     order_number = models.CharField(max_length=20, unique=True, editable=False)
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
@@ -63,8 +74,25 @@ class Order(models.Model):
     )
 
     payment_method = models.CharField(
-        max_length=40, default="cod", help_text="Cash on delivery"
+        max_length=40,
+        choices=PaymentMethod.choices,
+        default=PaymentMethod.COD,
     )
+    payment_status = models.CharField(
+        max_length=20,
+        choices=PaymentStatus.choices,
+        default=PaymentStatus.NOT_REQUIRED,
+    )
+    whish_external_id = models.CharField(
+        max_length=64,
+        blank=True,
+        db_index=True,
+        help_text="Idempotent reference sent to Whish Pay.",
+    )
+    whish_collect_url = models.URLField(blank=True)
+    whish_payer_phone = models.CharField(max_length=40, blank=True)
+    paid_at = models.DateTimeField(null=True, blank=True)
+
     subtotal = models.DecimalField(max_digits=10, decimal_places=2, default=Decimal("0"))
     total = models.DecimalField(max_digits=10, decimal_places=2, default=Decimal("0"))
 

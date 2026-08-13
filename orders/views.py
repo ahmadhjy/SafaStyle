@@ -1,19 +1,25 @@
+import logging
 import threading
 import uuid
 from decimal import Decimal
 
 from django.contrib import messages
 from django.db import transaction
-from django.http import JsonResponse
+from django.http import HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
-from django.views.decorators.http import require_POST
+from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_GET, require_POST
 
 from catalog.models import Product, ProductVariation
 
 from .cart import Cart
 from .emails import send_order_emails
 from .forms import CheckoutForm
-from .models import DeliveryLocality, Governorate, OrderItem
+from .models import DeliveryLocality, Governorate, Order, OrderItem
+from .payments import decrement_stock_for_order, reconcile_whish_payment
+from .whish import WhishError, create_payment, whish_available_for
+
+logger = logging.getLogger(__name__)
 
 CHECKOUT_TOKEN_KEY = "checkout_token"
 
@@ -144,8 +150,46 @@ def cart_remove(request, variation_id):
     return redirect("orders:cart")
 
 
+def _build_order_from_cart(form, cart, request, profile):
+    order = form.save(commit=False)
+    if request.user.is_authenticated:
+        order.user = request.user
+    order.subtotal = cart.subtotal
+    delivery_fee = Decimal("0")
+    if order.country == "Lebanon" and order.governorate:
+        delivery_fee = order.governorate.delivery_fee
+    else:
+        order.governorate = None
+    order.delivery_fee = delivery_fee
+    order.total = cart.subtotal + delivery_fee
+    order.payment_method = form.cleaned_data["payment_method"]
+    if order.payment_method == Order.PaymentMethod.WHISH:
+        order.payment_status = Order.PaymentStatus.AWAITING
+        order.whish_external_id = uuid.uuid4().hex
+    else:
+        order.payment_status = Order.PaymentStatus.NOT_REQUIRED
+        order.whish_external_id = ""
+        order.whish_collect_url = ""
+    order.save()
+    if profile is not None:
+        profile.update_from_order(order)
+    for item in cart:
+        OrderItem.objects.create(
+            order=order,
+            product_name=item["name"],
+            variation_label=item.get("label", ""),
+            sku=item.get("sku", ""),
+            unit_price=item["price"],
+            quantity=item["qty"],
+            line_total=item["total"],
+            variation=item.get("variation"),
+        )
+    return order
+
+
 def checkout(request):
     cart = Cart(request)
+    allow_whish = whish_available_for(request)
 
     profile = None
     if request.user.is_authenticated:
@@ -170,43 +214,68 @@ def checkout(request):
             messages.warning(request, "Your bag is empty.")
             return redirect("catalog:shop")
 
-        form = CheckoutForm(request.POST)
+        form = CheckoutForm(request.POST, allow_whish=allow_whish)
         if form.is_valid():
             # Consume the token immediately so a near-simultaneous second POST
             # can't create a twin order.
             request.session.pop(CHECKOUT_TOKEN_KEY, None)
 
-            with transaction.atomic():
-                order = form.save(commit=False)
-                if request.user.is_authenticated:
-                    order.user = request.user
-                order.subtotal = cart.subtotal
-                delivery_fee = Decimal("0")
-                if order.country == "Lebanon" and order.governorate:
-                    delivery_fee = order.governorate.delivery_fee
-                else:
-                    order.governorate = None
-                order.delivery_fee = delivery_fee
-                order.total = cart.subtotal + delivery_fee
-                order.payment_method = "cod"
-                order.save()
-                if profile is not None:
-                    profile.update_from_order(order)
-                for item in cart:
-                    OrderItem.objects.create(
-                        order=order,
-                        product_name=item["name"],
-                        variation_label=item.get("label", ""),
-                        sku=item.get("sku", ""),
-                        unit_price=item["price"],
-                        quantity=item["qty"],
-                        line_total=item["total"],
-                        variation=item.get("variation"),
+            payment_method = form.cleaned_data["payment_method"]
+
+            if payment_method == Order.PaymentMethod.WHISH:
+                order = None
+                try:
+                    with transaction.atomic():
+                        order = _build_order_from_cart(form, cart, request, profile)
+                    collect_url = create_payment(order)
+                    order.whish_collect_url = collect_url
+                    order.save(update_fields=["whish_collect_url", "updated_at"])
+                except WhishError as exc:
+                    logger.warning("Whish create_payment failed: %s", exc)
+                    if order and order.pk:
+                        order.delete()
+                    # Re-issue token so the customer can retry without a hard fail loop.
+                    checkout_token = uuid.uuid4().hex
+                    request.session[CHECKOUT_TOKEN_KEY] = checkout_token
+                    messages.error(
+                        request,
+                        f"Whish Pay could not start checkout: {exc}. "
+                        "Please try again or use cash on delivery.",
                     )
-                    variation = item.get("variation")
-                    if variation and variation.stock >= item["qty"]:
-                        variation.stock -= item["qty"]
-                        variation.save(update_fields=["stock", "updated_at"])
+                    form = CheckoutForm(request.POST, allow_whish=allow_whish)
+                    governorates = list(
+                        Governorate.objects.filter(is_active=True).values(
+                            "id", "name", "delivery_fee"
+                        )
+                    )
+                    localities = list(
+                        DeliveryLocality.objects.filter(
+                            is_active=True, governorate__is_active=True
+                        )
+                        .order_by("name")
+                        .values("id", "name", "governorate_id")
+                    )
+                    return render(
+                        request,
+                        "orders/checkout.html",
+                        {
+                            "form": form,
+                            "cart": cart,
+                            "governorates_json": governorates,
+                            "localities_json": localities,
+                            "checkout_token": checkout_token,
+                            "allow_whish": allow_whish,
+                        },
+                    )
+
+                cart.clear()
+                request.session["last_order_number"] = order.order_number
+                return redirect(collect_url)
+
+            # Cash on delivery — create, deduct stock, email, thank-you.
+            with transaction.atomic():
+                order = _build_order_from_cart(form, cart, request, profile)
+                decrement_stock_for_order(order)
 
             cart.clear()
             request.session["last_order_number"] = order.order_number
@@ -217,7 +286,7 @@ def checkout(request):
             messages.warning(request, "Your bag is empty.")
             return redirect("catalog:shop")
         initial = profile.checkout_initial() if profile is not None else None
-        form = CheckoutForm(initial=initial)
+        form = CheckoutForm(initial=initial, allow_whish=allow_whish)
 
     # Issue a fresh one-time token for this render.
     checkout_token = uuid.uuid4().hex
@@ -241,12 +310,98 @@ def checkout(request):
             "governorates_json": governorates,
             "localities_json": localities,
             "checkout_token": checkout_token,
+            "allow_whish": allow_whish,
         },
     )
 
 
 def order_success(request, order_number):
-    from .models import Order
-
     order = get_object_or_404(Order, order_number=order_number)
     return render(request, "orders/success.html", {"order": order})
+
+
+def _whish_order_from_callback(request):
+    external_id = (request.GET.get("externalId") or "").strip()
+    order_number = (request.GET.get("order") or "").strip()
+    qs = Order.objects.filter(payment_method=Order.PaymentMethod.WHISH)
+    if external_id:
+        order = qs.filter(whish_external_id=external_id).first()
+        if order:
+            return order
+    if order_number:
+        return qs.filter(order_number=order_number).first()
+    return None
+
+
+@csrf_exempt
+@require_GET
+def whish_callback_success(request):
+    """Whish server → us: payment attempt succeeded. Verify before fulfilling."""
+    order = _whish_order_from_callback(request)
+    if not order:
+        logger.warning("Whish success callback for unknown order: %s", request.GET)
+        return HttpResponse("unknown", status=404)
+    try:
+        reconcile_whish_payment(order)
+    except WhishError:
+        logger.exception("Whish success callback reconcile failed for %s", order.order_number)
+    return HttpResponse("ok")
+
+
+@csrf_exempt
+@require_GET
+def whish_callback_failure(request):
+    """Whish server → us: one attempt failed; link may still be payable."""
+    order = _whish_order_from_callback(request)
+    if not order:
+        logger.warning("Whish failure callback for unknown order: %s", request.GET)
+        return HttpResponse("unknown", status=404)
+    # Do not cancel — docs say failure leaves the link open. Just acknowledge.
+    logger.info("Whish failure callback for %s (link may still be payable)", order.order_number)
+    return HttpResponse("ok")
+
+
+def whish_redirect_success(request, order_number):
+    """Browser return after payer finishes successfully on Whish hosted page."""
+    order = get_object_or_404(
+        Order, order_number=order_number, payment_method=Order.PaymentMethod.WHISH
+    )
+    try:
+        order, status = reconcile_whish_payment(order)
+    except WhishError as exc:
+        logger.warning("Whish success redirect reconcile failed: %s", exc)
+        messages.warning(
+            request,
+            "We’re confirming your Whish payment. If it doesn’t show as paid shortly, contact us.",
+        )
+        return render(request, "orders/whish_pending.html", {"order": order})
+
+    if status == "success" or order.payment_status == Order.PaymentStatus.PAID:
+        request.session["last_order_number"] = order.order_number
+        return redirect("orders:success", order_number=order.order_number)
+
+    return render(
+        request,
+        "orders/whish_pending.html",
+        {"order": order, "collect_status": status},
+    )
+
+
+def whish_redirect_failure(request, order_number):
+    """Browser return after a failed attempt — customer can retry the same link."""
+    order = get_object_or_404(
+        Order, order_number=order_number, payment_method=Order.PaymentMethod.WHISH
+    )
+    try:
+        order, status = reconcile_whish_payment(order)
+    except WhishError:
+        status = "pending"
+
+    if status == "success" or order.payment_status == Order.PaymentStatus.PAID:
+        return redirect("orders:success", order_number=order.order_number)
+
+    return render(
+        request,
+        "orders/whish_failed.html",
+        {"order": order, "collect_status": status},
+    )
