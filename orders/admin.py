@@ -112,6 +112,7 @@ class DeliveryLocalityAdmin(admin.ModelAdmin):
 @admin.register(Order)
 class OrderAdmin(admin.ModelAdmin):
     form = OrderAdminForm
+    actions = ("resend_order_emails",)
     list_display = (
         "order_number",
         "full_name",
@@ -245,3 +246,13 @@ class OrderAdmin(admin.ModelAdmin):
             '<div class="order-full-address">{}</div>',
             format_html("<br>".join("{}" for _ in lines), *lines),
         )
+
+    @admin.action(description="Resend order emails")
+    def resend_order_emails(self, request, queryset):
+        from .emails import send_order_emails
+
+        count = 0
+        for order in queryset:
+            send_order_emails(order)
+            count += 1
+        self.message_user(request, f"Triggered emails for {count} order(s).")

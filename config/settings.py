@@ -171,9 +171,9 @@ JAZZMIN_UI_TWEAKS = {
 }
 
 # ---------------------------------------------------------------------------
-# Email (IONOS SMTP). Credentials live in the gitignored .env file.
-# If no SMTP user is configured, fall back to the console backend so local
-# development never fails and never sends real mail.
+# Email. Prefer Resend (HTTPS API) when RESEND_API_KEY is set — DigitalOcean
+# often blocks outbound SMTP to IONOS (ports 587/465), which causes timeouts.
+# Fallback: IONOS SMTP, then console for local dev without credentials.
 # ---------------------------------------------------------------------------
 EMAIL_HOST = os.environ.get("EMAIL_HOST", "smtp.ionos.com")
 EMAIL_PORT = int(os.environ.get("EMAIL_PORT", "587"))
@@ -182,13 +182,16 @@ EMAIL_USE_SSL = os.environ.get("EMAIL_USE_SSL", "false").lower() == "true"
 EMAIL_HOST_USER = os.environ.get("EMAIL_HOST_USER", "")
 EMAIL_HOST_PASSWORD = os.environ.get("EMAIL_HOST_PASSWORD", "")
 EMAIL_TIMEOUT = int(os.environ.get("EMAIL_TIMEOUT", "20"))
+RESEND_API_KEY = os.environ.get("RESEND_API_KEY", "")
 
-_default_backend = (
-    "django.core.mail.backends.smtp.EmailBackend"
-    if EMAIL_HOST_USER
-    else "django.core.mail.backends.console.EmailBackend"
-)
-EMAIL_BACKEND = os.environ.get("EMAIL_BACKEND", _default_backend)
+if os.environ.get("EMAIL_BACKEND"):
+    EMAIL_BACKEND = os.environ["EMAIL_BACKEND"]
+elif RESEND_API_KEY:
+    EMAIL_BACKEND = "config.email_backends.ResendEmailBackend"
+elif EMAIL_HOST_USER:
+    EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+else:
+    EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
 
 DEFAULT_FROM_EMAIL = os.environ.get(
     "DEFAULT_FROM_EMAIL", "Safa Style <info@safastyle.com>"
