@@ -2471,10 +2471,21 @@ body.nav-open .site-header .header-search input {
   }
   body.nav-open .nav-dropdown {
     border-bottom: 1px solid var(--line);
-  }
-  /* On mobile show category menu inline (no hover) */
-  body.nav-open .nav-dropdown-menu {
     position: static;
+  }
+  body.nav-open .nav-dropdown::after {
+    display: none !important;
+  }
+  /* Keep categories inline on mobile — beat desktop hover/focus transforms. */
+  body.nav-open .nav-dropdown .nav-dropdown-menu,
+  body.nav-open .nav-dropdown:hover .nav-dropdown-menu,
+  body.nav-open .nav-dropdown:focus-within .nav-dropdown-menu,
+  body.nav-open .nav-dropdown.is-open .nav-dropdown-menu {
+    position: static;
+    left: auto;
+    right: auto;
+    top: auto;
+    margin: 0 0 0.5rem;
     transform: none;
     opacity: 1;
     visibility: visible;
@@ -2482,9 +2493,9 @@ body.nav-open .site-header .header-search input {
     box-shadow: none;
     border: 0;
     border-top: 0;
-    margin: 0 0 0.5rem;
     padding: 0 0 0.5rem 0.75rem;
     min-width: 0;
+    width: 100%;
   }
   .header-search {
     display: none;
