@@ -65,7 +65,7 @@
         {% include "partials/logo.html" %}
       </a>
 
-      <nav class="nav-primary" aria-label="Primary">
+      <nav class="nav-primary" id="primary-nav" aria-label="Primary">
         <form class="nav-search" action="{% url 'catalog:shop' %}" method="get" role="search">
           <label class="sr-only" for="nav-q">Search products</label>
           <svg class="header-search-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
@@ -109,15 +109,57 @@
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 4-6 8-6s8 2 8 6"/></svg>
           </a>
         {% endif %}
-        <a class="icon-btn cart-btn" href="{% url 'orders:cart' %}" aria-label="Bag, {{ cart_count }} item{{ cart_count|pluralize }}">
-          <svg class="bag-icon" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-            <path d="M8 10V8a4 4 0 0 1 8 0v2"/>
-            <path d="M5 10h14a1 1 0 0 1 1 1.1l-1.1 10a1 1 0 0 1-1 .9H6.1a1 1 0 0 1-1-.9L4 11.1A1 1 0 0 1 5 10z"/>
-          </svg>
-          <span class="cart-badge{% if not cart_count %} is-empty{% endif %}" id="cart-badge">{{ cart_count }}</span>
-          <span class="cart-meta" id="cart-meta">{{ cart_count }} / ${{ cart_total|floatformat:2 }}</span>
-        </a>
-        <button type="button" class="icon-btn menu-toggle" aria-label="Menu" aria-expanded="false" aria-controls="top" data-menu-toggle>
+        <div class="bag-menu" data-bag-menu>
+          <button
+            type="button"
+            class="icon-btn cart-btn"
+            id="cart-btn"
+            aria-label="Bag, {{ cart_count }} item{{ cart_count|pluralize }}"
+            aria-expanded="false"
+            aria-controls="bag-preview"
+            data-bag-toggle
+          >
+            <svg class="bag-icon" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M8 10V8a4 4 0 0 1 8 0v2"/>
+              <path d="M5 10h14a1 1 0 0 1 1 1.1l-1.1 10a1 1 0 0 1-1 .9H6.1a1 1 0 0 1-1-.9L4 11.1A1 1 0 0 1 5 10z"/>
+            </svg>
+            <span class="cart-badge{% if not cart_count %} is-empty{% endif %}" id="cart-badge">{{ cart_count }}</span>
+            <span class="cart-meta" id="cart-meta">{{ cart_count }} / ${{ cart_total|floatformat:2 }}</span>
+          </button>
+          <div class="bag-preview" id="bag-preview" hidden data-bag-preview>
+            <div class="bag-preview-head">
+              <strong>Your bag</strong>
+              <span data-bag-count-label>{% if cart_count %}{{ cart_count }} item{{ cart_count|pluralize }}{% else %}Empty{% endif %}</span>
+            </div>
+            <div class="bag-preview-items" data-bag-items>
+              {% for item in cart_preview %}
+                <div class="bag-preview-row">
+                  {% if item.image %}
+                    <img class="bag-preview-thumb" src="{{ item.image }}" alt="" width="56" height="72" loading="lazy">
+                  {% else %}
+                    <span class="bag-preview-thumb bag-preview-thumb--ph" aria-hidden="true"></span>
+                  {% endif %}
+                  <div class="bag-preview-info">
+                    <p class="bag-preview-name">{{ item.name }}</p>
+                    {% if item.label %}<p class="bag-preview-label">{{ item.label }}</p>{% endif %}
+                    <p class="bag-preview-qty">Qty {{ item.qty }}</p>
+                  </div>
+                  <p class="bag-preview-line">${{ item.total|floatformat:2 }}</p>
+                </div>
+              {% empty %}
+                <p class="bag-preview-empty" data-bag-empty>Your bag is empty.</p>
+              {% endfor %}
+            </div>
+            <div class="bag-preview-foot">
+              <div class="bag-preview-total">
+                <span>Total</span>
+                <strong data-bag-total>${{ cart_total|floatformat:2 }}</strong>
+              </div>
+              <a class="btn btn-gold btn-block" href="{% url 'orders:cart' %}" data-bag-view>View bag</a>
+            </div>
+          </div>
+        </div>
+        <button type="button" class="icon-btn menu-toggle" aria-label="Menu" aria-expanded="false" aria-controls="primary-nav" data-menu-toggle>
           <span></span><span></span>
         </button>
       </div>

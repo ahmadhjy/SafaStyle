@@ -42,6 +42,21 @@ def _is_ajax(request):
     return request.headers.get("x-requested-with") == "XMLHttpRequest"
 
 
+def _cart_preview_payload(cart):
+    items = []
+    for item in cart:
+        items.append(
+            {
+                "name": item.get("name") or "Item",
+                "label": item.get("label") or "",
+                "qty": item["qty"],
+                "total": float(item["total"]),
+                "image": item.get("image") or "",
+            }
+        )
+    return items
+
+
 def _cart_json(cart, ok=True, message="", error=""):
     return JsonResponse(
         {
@@ -50,6 +65,7 @@ def _cart_json(cart, ok=True, message="", error=""):
             "error": error,
             "cart_count": len(cart),
             "cart_total": float(cart.subtotal),
+            "items": _cart_preview_payload(cart),
         },
         status=200 if ok else 400,
     )

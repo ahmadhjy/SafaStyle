@@ -1,15 +1,125 @@
 document.addEventListener("DOMContentLoaded", () => {
   const prefersReduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
-  // Mobile nav
   const toggle = document.querySelector("[data-menu-toggle]");
+  const bagMenu = document.querySelector("[data-bag-menu]");
+  const bagToggle = document.querySelector("[data-bag-toggle]");
+  const bagPreview = document.querySelector("[data-bag-preview]");
+
+  function setBagOpen(open) {
+    if (!bagToggle || !bagPreview) return;
+    bagPreview.hidden = !open;
+    bagToggle.setAttribute("aria-expanded", open ? "true" : "false");
+    document.body.classList.toggle("bag-open", open);
+  }
+
+  function closeBag() {
+    setBagOpen(false);
+  }
+
+  function setNavOpen(open) {
+    document.body.classList.toggle("nav-open", open);
+    if (toggle) toggle.setAttribute("aria-expanded", open ? "true" : "false");
+    document.body.style.overflow = open ? "hidden" : "";
+    if (open) {
+      closeBag();
+      const nav = document.getElementById("primary-nav");
+      if (nav) {
+        nav.scrollTop = 0;
+        const header = document.querySelector(".site-header");
+        if (header) {
+          const h = header.getBoundingClientRect().height;
+          nav.style.maxHeight = `calc(100dvh - ${Math.ceil(h)}px)`;
+        }
+      }
+    }
+  }
+
+  // Mobile nav
   if (toggle) {
     toggle.addEventListener("click", () => {
-      document.body.classList.toggle("nav-open");
-      const open = document.body.classList.contains("nav-open");
-      toggle.setAttribute("aria-expanded", open ? "true" : "false");
-      document.body.style.overflow = open ? "hidden" : "";
+      const open = !document.body.classList.contains("nav-open");
+      setNavOpen(open);
     });
+  }
+
+  // Bag preview (all devices)
+  if (bagToggle && bagPreview) {
+    bagToggle.addEventListener("click", (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      const open = bagPreview.hidden;
+      if (open) setNavOpen(false);
+      setBagOpen(open);
+    });
+
+    document.addEventListener("click", (e) => {
+      if (!bagMenu) return;
+      if (!bagMenu.contains(e.target)) closeBag();
+    });
+
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape") {
+        closeBag();
+        if (document.body.classList.contains("nav-open")) setNavOpen(false);
+      }
+    });
+  }
+
+  // Expose helpers for store.js after AJAX add-to-bag.
+  window.SafaBag = {
+    close: closeBag,
+    open: () => setBagOpen(true),
+    render(items, total, count) {
+      const list = document.querySelector("[data-bag-items]");
+      const totalEl = document.querySelector("[data-bag-total]");
+      const countLabel = document.querySelector("[data-bag-count-label]");
+      if (totalEl) {
+        totalEl.textContent = `$${Number(total || 0).toFixed(2)}`;
+      }
+      if (countLabel) {
+        countLabel.textContent =
+          count > 0 ? `${count} item${count === 1 ? "" : "s"}` : "Empty";
+      }
+      if (!list) return;
+      if (!items || !items.length) {
+        list.innerHTML =
+          '<p class="bag-preview-empty" data-bag-empty>Your bag is empty.</p>';
+        return;
+      }
+      list.innerHTML = items
+        .map((item) => {
+          const thumb = item.image
+            ? `<img class="bag-preview-thumb" src="${escapeAttr(item.image)}" alt="" width="56" height="72" loading="lazy">`
+            : `<span class="bag-preview-thumb bag-preview-thumb--ph" aria-hidden="true"></span>`;
+          const label = item.label
+            ? `<p class="bag-preview-label">${escapeHtml(item.label)}</p>`
+            : "";
+          return (
+            `<div class="bag-preview-row">${thumb}` +
+            `<div class="bag-preview-info">` +
+            `<p class="bag-preview-name">${escapeHtml(item.name || "Item")}</p>` +
+            label +
+            `<p class="bag-preview-qty">Qty ${Number(item.qty) || 1}</p>` +
+            `</div>` +
+            `<p class="bag-preview-line">$${Number(item.total || 0).toFixed(2)}</p>` +
+            `</div>`
+          );
+        })
+        .join("");
+    },
+  };
+
+  function escapeHtml(value) {
+    return String(value)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;");
+  }
+
+  function escapeAttr(value) {
+    return escapeHtml(value).replace(/'/g, "&#39;");
   }
 
   // Categories dropdown accessibility
@@ -31,6 +141,7 @@ document.addEventListener("DOMContentLoaded", () => {
   // Header shrink on scroll
   const header = document.querySelector(".site-header");
   const onScroll = () => {
+    if (!header) return;
     if (window.scrollY > 20) header.classList.add("is-scrolled");
     else header.classList.remove("is-scrolled");
   };

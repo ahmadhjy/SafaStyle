@@ -108,7 +108,7 @@
   }
 
   // --- Header cart badge ---------------------------------------------------
-  function updateCartMeta(count, total) {
+  function updateCartMeta(count, total, items) {
     const meta = document.getElementById("cart-meta");
     if (meta) meta.textContent = `${count} / $${Number(total).toFixed(2)}`;
     const badge = document.getElementById("cart-badge");
@@ -119,6 +119,9 @@
     const cartBtn = document.querySelector(".cart-btn");
     if (cartBtn) {
       cartBtn.setAttribute("aria-label", `Bag, ${count} item${count === 1 ? "" : "s"}`);
+    }
+    if (window.SafaBag && typeof window.SafaBag.render === "function" && items) {
+      window.SafaBag.render(items, total, count);
     }
   }
 
@@ -138,7 +141,7 @@
 
   function handleAddResult({ data }) {
     if (data.ok) {
-      updateCartMeta(data.cart_count, data.cart_total);
+      updateCartMeta(data.cart_count, data.cart_total, data.items);
       toast(data.message || "Added to your bag.", {
         link: { href: "/cart/", text: "View bag" },
       });
