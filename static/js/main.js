@@ -20,6 +20,7 @@ document.addEventListener("DOMContentLoaded", () => {
   function setNavOpen(open) {
     const header = document.querySelector(".site-header");
     const nav = document.getElementById("primary-nav");
+    const wasOpen = document.body.classList.contains("nav-open");
 
     if (open) {
       closeBag();
@@ -42,6 +43,7 @@ document.addEventListener("DOMContentLoaded", () => {
         nav.scrollTop = 0;
       }
     } else {
+      if (!wasOpen) return;
       const scrollY = parseInt(document.body.dataset.navScrollY || "0", 10) || 0;
       document.body.classList.remove("nav-open");
       if (toggle) toggle.setAttribute("aria-expanded", "false");
