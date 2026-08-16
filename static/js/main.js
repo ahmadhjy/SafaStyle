@@ -18,20 +18,45 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   function setNavOpen(open) {
-    document.body.classList.toggle("nav-open", open);
-    if (toggle) toggle.setAttribute("aria-expanded", open ? "true" : "false");
-    document.body.style.overflow = open ? "hidden" : "";
+    const header = document.querySelector(".site-header");
+    const nav = document.getElementById("primary-nav");
+
     if (open) {
       closeBag();
-      const nav = document.getElementById("primary-nav");
-      if (nav) {
+      // Freeze scroll in place — overflow:hidden alone breaks sticky and jumps to page top.
+      const scrollY = window.scrollY || window.pageYOffset || 0;
+      document.body.dataset.navScrollY = String(scrollY);
+      document.body.style.position = "fixed";
+      document.body.style.top = `-${scrollY}px`;
+      document.body.style.left = "0";
+      document.body.style.right = "0";
+      document.body.style.width = "100%";
+      document.body.classList.add("nav-open");
+      if (toggle) toggle.setAttribute("aria-expanded", "true");
+
+      if (header && nav) {
+        const h = Math.ceil(header.getBoundingClientRect().height);
+        header.style.setProperty("--nav-header-h", `${h}px`);
+        nav.style.top = `${h}px`;
+        nav.style.maxHeight = `calc(100dvh - ${h}px)`;
         nav.scrollTop = 0;
-        const header = document.querySelector(".site-header");
-        if (header) {
-          const h = header.getBoundingClientRect().height;
-          nav.style.maxHeight = `calc(100dvh - ${Math.ceil(h)}px)`;
-        }
       }
+    } else {
+      const scrollY = parseInt(document.body.dataset.navScrollY || "0", 10) || 0;
+      document.body.classList.remove("nav-open");
+      if (toggle) toggle.setAttribute("aria-expanded", "false");
+      document.body.style.position = "";
+      document.body.style.top = "";
+      document.body.style.left = "";
+      document.body.style.right = "";
+      document.body.style.width = "";
+      document.body.style.overflow = "";
+      delete document.body.dataset.navScrollY;
+      if (nav) {
+        nav.style.top = "";
+        nav.style.maxHeight = "";
+      }
+      window.scrollTo(0, scrollY);
     }
   }
 

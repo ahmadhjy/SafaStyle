@@ -2431,17 +2431,23 @@ body.nav-open .site-header .header-search input {
     display: inline-flex;
   }
   body.nav-open .site-header {
-    /* Keep sticky header as the positioning context so the menu can scroll. */
+    /* Stay pinned in the viewport where the burger was clicked. */
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    width: 100%;
     overflow: visible;
+    z-index: 60;
   }
   body.nav-open .nav-primary {
     display: flex;
-    position: absolute;
+    position: fixed;
     left: 0;
     right: 0;
-    top: 100%;
+    top: var(--nav-header-h, 4.5rem);
     width: 100%;
-    max-height: calc(100dvh - 4.5rem);
+    max-height: calc(100dvh - var(--nav-header-h, 4.5rem));
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
     overscroll-behavior: contain;
@@ -2454,7 +2460,7 @@ body.nav-open .site-header .header-search input {
     padding: 0.5rem 1.25rem 1.5rem;
     border-bottom: 1px solid var(--line);
     box-shadow: var(--shadow);
-    z-index: 55;
+    z-index: 59;
     box-sizing: border-box;
   }
   body.nav-open .nav-primary > a,
