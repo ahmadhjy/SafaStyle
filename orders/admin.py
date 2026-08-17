@@ -121,7 +121,6 @@ class OrderAdmin(admin.ModelAdmin):
         "governorate",
         "status",
         "payment_method",
-        "payment_status",
         "total",
         "created_at",
     )

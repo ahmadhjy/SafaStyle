@@ -25,3 +25,73 @@
   line-height: 1.45;
   field-sizing: content;
 }
+
+/* Orders changelist: horizontal scroll + readable status */
+#changelist-form .results {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  width: 100%;
+}
+
+#result_list {
+  min-width: 1080px;
+}
+
+#result_list td.field-status {
+  min-width: 10.5rem;
+  white-space: nowrap;
+}
+
+#result_list td.field-status select {
+  min-width: 9.75rem;
+  max-width: none;
+  width: 9.75rem;
+  font-weight: 600;
+  border-radius: 999px;
+  padding: 0.35rem 0.55rem;
+  border: 1px solid transparent;
+}
+
+#result_list tr.order-row-pending td {
+  background-color: #fff8e8 !important;
+}
+#result_list tr.order-row-confirmed td {
+  background-color: #eaf7ee !important;
+}
+#result_list tr.order-row-processing td {
+  background-color: #eaf2ff !important;
+}
+#result_list tr.order-row-shipped td {
+  background-color: #f1e9ff !important;
+}
+#result_list tr.order-row-delivered td {
+  background-color: #e8f7f4 !important;
+}
+#result_list tr.order-row-cancelled td {
+  background-color: #fdecec !important;
+}
+
+#result_list td.field-status select[data-status="pending"] {
+  background: #ffe8a8;
+  color: #7a5a00;
+}
+#result_list td.field-status select[data-status="confirmed"] {
+  background: #b8e6c4;
+  color: #1d6b35;
+}
+#result_list td.field-status select[data-status="processing"] {
+  background: #bfd4ff;
+  color: #1d4fad;
+}
+#result_list td.field-status select[data-status="shipped"] {
+  background: #d7c4ff;
+  color: #5b2d9e;
+}
+#result_list td.field-status select[data-status="delivered"] {
+  background: #b7ebe3;
+  color: #0f6b5c;
+}
+#result_list td.field-status select[data-status="cancelled"] {
+  background: #f5b7b7;
+  color: #8f1f1f;
+}

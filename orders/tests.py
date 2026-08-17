@@ -286,3 +286,70 @@ class WhishPayCheckoutTests(TestCase):
         self.assertEqual(resp.status_code, 200)
         self.assertEqual(resp.content, b"ok")
         mock_reconcile.assert_called_once()
+
+
+class CartStockSyncTests(TestCase):
+    def setUp(self):
+        self.product = Product.objects.create(
+            name="Scarce Set", slug="scarce-set", base_price=Decimal("20.00")
+        )
+        self.variation = ProductVariation.objects.create(
+            product=self.product, price=Decimal("20.00"), stock=2
+        )
+        self.gov, _ = Governorate.objects.get_or_create(
+            name="Beirut",
+            defaults={"delivery_fee": Decimal("4.00"), "is_active": True},
+        )
+        self.locality, _ = DeliveryLocality.objects.get_or_create(
+            name="Hamra",
+            governorate=self.gov,
+            defaults={"is_active": True},
+        )
+        self.checkout_url = reverse("orders:checkout")
+
+    def _payload(self, token):
+        return {
+            "checkout_token": token,
+            "first_name": "Sara",
+            "last_name": "Test",
+            "country": "Lebanon",
+            "governorate": self.gov.id,
+            "locality": self.locality.id,
+            "street_address": "Street 1",
+            "city": "Hamra",
+            "phone": "70123456",
+            "payment_method": "cod",
+        }
+
+    def test_sync_removes_out_of_stock_items_from_bag(self):
+        self.client.post(reverse("orders:cart_add", args=[self.variation.id]))
+        self.variation.stock = 0
+        self.variation.save(update_fields=["stock", "updated_at"])
+        resp = self.client.get(reverse("orders:cart"))
+        self.assertEqual(resp.status_code, 200)
+        self.assertContains(resp, "out of stock")
+        session_cart = self.client.session.get("cart", {})
+        self.assertEqual(session_cart, {})
+
+    def test_checkout_blocked_when_item_goes_out_of_stock(self):
+        self.client.post(reverse("orders:cart_add", args=[self.variation.id]))
+        self.client.get(self.checkout_url)
+        token = self.client.session["checkout_token"]
+        self.variation.stock = 0
+        self.variation.save(update_fields=["stock", "updated_at"])
+        resp = self.client.post(self.checkout_url, self._payload(token))
+        self.assertEqual(resp.status_code, 302)
+        self.assertEqual(resp.url, reverse("orders:cart"))
+        self.assertEqual(Order.objects.count(), 0)
+
+    def test_qty_clamped_when_stock_drops(self):
+        self.client.post(
+            reverse("orders:cart_add", args=[self.variation.id]),
+            {"quantity": 2},
+        )
+        self.variation.stock = 1
+        self.variation.save(update_fields=["stock", "updated_at"])
+        resp = self.client.get(reverse("orders:cart"))
+        self.assertEqual(resp.status_code, 200)
+        session_cart = self.client.session.get("cart", {})
+        self.assertEqual(session_cart[str(self.variation.id)]["qty"], 1)

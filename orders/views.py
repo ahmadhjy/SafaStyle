@@ -73,6 +73,8 @@ def _cart_json(cart, ok=True, message="", error=""):
 
 def cart_detail(request):
     cart = Cart(request)
+    for note in cart.sync_stock():
+        messages.warning(request, note)
     return render(request, "orders/cart.html", {"cart": cart})
 
 
@@ -149,12 +151,20 @@ def cart_quick_add(request):
 @require_POST
 def cart_update(request, variation_id):
     cart = Cart(request)
-    variation = get_object_or_404(ProductVariation, pk=variation_id)
+    variation = get_object_or_404(
+        ProductVariation.objects.select_related("product"), pk=variation_id
+    )
     qty = int(request.POST.get("quantity", 1) or 1)
     if qty <= 0:
         cart.remove(variation_id)
+        messages.info(request, "Item removed.")
     else:
-        cart.add(variation, quantity=qty, replace=True)
+        ok = cart.add(variation, quantity=qty, replace=True)
+        if not ok:
+            messages.error(
+                request,
+                f"{variation.product.name} is out of stock and was removed from your bag.",
+            )
     return redirect("orders:cart")
 
 
@@ -166,7 +176,37 @@ def cart_remove(request, variation_id):
     return redirect("orders:cart")
 
 
+def _cart_stock_blockers(cart):
+    """Sync stock then return (notes, problems) if checkout must not proceed."""
+    notes = cart.sync_stock()
+    problems = cart.unavailable_lines()
+    return notes, problems
+
+
 def _build_order_from_cart(form, cart, request, profile):
+    # Lock variations and re-check stock inside the caller's transaction.
+    variation_ids = [item["variation"].pk for item in cart if item.get("variation")]
+    locked = {
+        v.pk: v
+        for v in ProductVariation.objects.select_for_update()
+        .select_related("product")
+        .filter(pk__in=variation_ids)
+    }
+    for item in cart:
+        variation = item.get("variation")
+        if not variation:
+            raise ValueError(f"{item.get('name', 'Item')} is no longer available.")
+        current = locked.get(variation.pk)
+        if (
+            not current
+            or not current.is_active
+            or not current.product.is_active
+            or current.stock < item["qty"]
+        ):
+            raise ValueError(
+                f"{item.get('name', 'Item')} is out of stock. Please update your bag."
+            )
+
     order = form.save(commit=False)
     if request.user.is_authenticated:
         order.user = request.user
@@ -226,9 +266,17 @@ def checkout(request):
             messages.info(request, "This order was already submitted.")
             return redirect("catalog:shop")
 
+        notes, problems = _cart_stock_blockers(cart)
+        for note in notes:
+            messages.warning(request, note)
+        if problems:
+            for name, reason in problems:
+                messages.error(request, f"{name} is {reason}.")
+            return redirect("orders:cart")
         if len(cart) == 0:
             messages.warning(request, "Your bag is empty.")
-            return redirect("catalog:shop")
+            # If stock sync just emptied the bag, keep them on cart so they see why.
+            return redirect("orders:cart" if notes else "catalog:shop")
 
         form = CheckoutForm(request.POST, allow_whish=allow_whish)
         if form.is_valid():
@@ -246,6 +294,11 @@ def checkout(request):
                     collect_url = create_payment(order)
                     order.whish_collect_url = collect_url
                     order.save(update_fields=["whish_collect_url", "updated_at"])
+                except ValueError as exc:
+                    if order and order.pk:
+                        order.delete()
+                    messages.error(request, str(exc))
+                    return redirect("orders:cart")
                 except WhishError as exc:
                     logger.warning("Whish create_payment failed: %s", exc)
                     if order and order.pk:
@@ -289,18 +342,29 @@ def checkout(request):
                 return redirect(collect_url)
 
             # Cash on delivery — create, deduct stock, email, thank-you.
-            with transaction.atomic():
-                order = _build_order_from_cart(form, cart, request, profile)
-                decrement_stock_for_order(order)
+            try:
+                with transaction.atomic():
+                    order = _build_order_from_cart(form, cart, request, profile)
+                    decrement_stock_for_order(order)
+            except ValueError as exc:
+                messages.error(request, str(exc))
+                return redirect("orders:cart")
 
             cart.clear()
             request.session["last_order_number"] = order.order_number
             _send_order_emails_async(order)
             return redirect("orders:success", order_number=order.order_number)
     else:
+        notes, problems = _cart_stock_blockers(cart)
+        for note in notes:
+            messages.warning(request, note)
+        if problems:
+            for name, reason in problems:
+                messages.error(request, f"{name} is {reason}.")
+            return redirect("orders:cart")
         if len(cart) == 0:
             messages.warning(request, "Your bag is empty.")
-            return redirect("catalog:shop")
+            return redirect("orders:cart" if notes else "catalog:shop")
         initial = profile.checkout_initial() if profile is not None else None
         form = CheckoutForm(initial=initial, allow_whish=allow_whish)
 
