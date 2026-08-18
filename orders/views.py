@@ -186,9 +186,13 @@ def _cart_stock_blockers(cart):
 def _build_order_from_cart(form, cart, request, profile):
     # Lock variations and re-check stock inside the caller's transaction.
     variation_ids = [item["variation"].pk for item in cart if item.get("variation")]
+    # order_by() clears the model's color/size ordering (nullable outer joins).
+    # of=("self",) locks only ProductVariation — PostgreSQL rejects FOR UPDATE
+    # on the nullable side of an outer join, which was causing checkout 500s.
     locked = {
         v.pk: v
-        for v in ProductVariation.objects.select_for_update()
+        for v in ProductVariation.objects.order_by("pk")
+        .select_for_update(of=("self",))
         .select_related("product")
         .filter(pk__in=variation_ids)
     }
