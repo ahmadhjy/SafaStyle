@@ -1809,6 +1809,7 @@ body.nav-open .site-header .header-search input {
 }
 
 .swatch {
+  position: relative;
   width: 34px;
   height: 34px;
   border-radius: 50%;
@@ -1816,6 +1817,7 @@ body.nav-open .site-header .header-search input {
   box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.15);
   cursor: pointer;
   padding: 0;
+  overflow: hidden;
 }
 
 .swatch.is-active {
@@ -1823,12 +1825,14 @@ body.nav-open .site-header .header-search input {
 }
 
 .size-pill {
+  position: relative;
   min-width: 44px;
   height: 40px;
   border: 1px solid var(--line);
   background: #fff;
   cursor: pointer;
   padding: 0 0.75rem;
+  overflow: hidden;
 }
 
 .size-pill.is-active {
@@ -1840,6 +1844,42 @@ body.nav-open .site-header .header-search input {
 .size-pill:disabled {
   opacity: 0.35;
   cursor: not-allowed;
+}
+
+/* Out-of-stock slash on color/size selectors (visual only). */
+.swatch.is-oos,
+.size-pill.is-oos,
+.qv-swatch.is-oos,
+.qv-size.is-oos {
+  opacity: 0.55;
+}
+
+.swatch.is-oos::after,
+.size-pill.is-oos::after,
+.qv-swatch.is-oos::after,
+.qv-size.is-oos::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    to top right,
+    transparent calc(50% - 1.25px),
+    rgba(28, 28, 28, 0.72) calc(50% - 1.25px),
+    rgba(28, 28, 28, 0.72) calc(50% + 1.25px),
+    transparent calc(50% + 1.25px)
+  );
+  pointer-events: none;
+}
+
+.size-pill.is-active.is-oos::after,
+.qv-size.is-active.is-oos::after {
+  background: linear-gradient(
+    to top right,
+    transparent calc(50% - 1.25px),
+    rgba(255, 255, 255, 0.85) calc(50% - 1.25px),
+    rgba(255, 255, 255, 0.85) calc(50% + 1.25px),
+    transparent calc(50% + 1.25px)
+  );
 }
 
 .qty-row {
@@ -3277,6 +3317,7 @@ body.nav-open .site-header .header-search input {
 }
 
 .qv-swatch {
+  position: relative;
   width: 30px;
   height: 30px;
   border-radius: 50%;
@@ -3284,6 +3325,7 @@ body.nav-open .site-header .header-search input {
   box-shadow: 0 0 0 1px var(--line);
   cursor: pointer;
   padding: 0;
+  overflow: hidden;
 }
 
 .qv-swatch.is-active {
@@ -3291,12 +3333,14 @@ body.nav-open .site-header .header-search input {
 }
 
 .qv-size {
+  position: relative;
   min-width: 44px;
   padding: 0.45rem 0.7rem;
   border: 1px solid var(--line);
   background: #fff;
   cursor: pointer;
   font: inherit;
+  overflow: hidden;
 }
 
 .qv-size.is-active {

@@ -442,6 +442,34 @@
           btn.classList.remove("is-active");
         }
       });
+      this.syncOosMarkers();
+    },
+
+    // Visual only: slash/fade OOS colors and sizes. Selection logic unchanged.
+    syncOosMarkers() {
+      const { product, color } = this.state;
+      [...document.querySelectorAll("#qv-colors .qv-swatch")].forEach((btn) => {
+        const cid = Number(btn._color.id);
+        const inStock = product.variations.some(
+          (v) => Number(v.color_id) === cid && v.in_stock
+        );
+        btn.classList.toggle("is-oos", !inStock);
+      });
+      [...document.querySelectorAll("#qv-sizes .qv-size")].forEach((btn) => {
+        const sid = Number(btn._size.id);
+        const exists = product.variations.some(
+          (v) =>
+            Number(v.size_id) === sid &&
+            (color == null || Number(v.color_id) === Number(color))
+        );
+        const inStock = product.variations.some(
+          (v) =>
+            v.in_stock &&
+            Number(v.size_id) === sid &&
+            (color == null || Number(v.color_id) === Number(color))
+        );
+        btn.classList.toggle("is-oos", exists && !inStock);
+      });
     },
 
     currentVariation() {

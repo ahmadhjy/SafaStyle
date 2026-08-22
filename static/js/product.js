@@ -235,6 +235,35 @@
         btn.classList.remove("is-active");
       }
     });
+    syncOosMarkers();
+  }
+
+  // Visual only: slash/fade OOS colors and sizes. Does not change selection rules.
+  function syncOosMarkers() {
+    colorBtns.forEach((btn) => {
+      const cid = Number(btn.dataset.colorId);
+      const inStock = variations.some(
+        (v) => Number(v.color_id) === cid && variationInStock(v)
+      );
+      btn.classList.toggle("is-oos", !inStock);
+    });
+
+    sizeBtns.forEach((btn) => {
+      const sid = Number(btn.dataset.sizeId);
+      const exists =
+        selectedColor == null
+          ? variations.some((v) => Number(v.size_id) === sid)
+          : variations.some(
+              (v) =>
+                Number(v.color_id) === Number(selectedColor) && Number(v.size_id) === sid
+            );
+      const inStock = variations.some((v) => {
+        if (Number(v.size_id) !== sid || !variationInStock(v)) return false;
+        if (selectedColor == null) return true;
+        return Number(v.color_id) === Number(selectedColor);
+      });
+      btn.classList.toggle("is-oos", exists && !inStock);
+    });
   }
 
   function selectedLabel() {
