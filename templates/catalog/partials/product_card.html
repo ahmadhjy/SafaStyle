@@ -38,7 +38,11 @@
         {% endfor %}
       </div>
     {% endif %}
-    {% if product.has_sale %}<span class="badge">Sale</span>{% endif %}
+    {% if product.is_out_of_stock %}
+      <span class="badge badge--oos">Out of stock</span>
+    {% elif product.has_sale %}
+      <span class="badge">Sale</span>
+    {% endif %}
     <div class="pc-actions">
       <button type="button" class="pc-action pc-quick" data-quick aria-label="View {{ product.name }}">
         View

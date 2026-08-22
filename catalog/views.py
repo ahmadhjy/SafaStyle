@@ -1,10 +1,40 @@
-from django.db.models import Min, Prefetch, Q
+from django.db.models import Exists, Min, OuterRef, Prefetch, Q
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, render
 from django.views.decorators.http import require_GET
 
 from .models import Category, Product, ProductImage, ProductVariation
 from .category_icons import accent_for_slug, icon_static_path
+
+
+def _annotate_has_stock(qs):
+    """Mark products that still have at least one orderable variation."""
+    return qs.annotate(
+        has_stock=Exists(
+            ProductVariation.objects.filter(
+                product_id=OuterRef("pk"),
+                is_active=True,
+                stock__gt=0,
+            )
+        )
+    )
+
+
+def _card_product_qs(qs=None):
+    """Shared listing queryset: images + stock flag for product cards."""
+    if qs is None:
+        qs = Product.objects.filter(is_active=True)
+    return _annotate_has_stock(
+        qs.prefetch_related(
+            Prefetch(
+                "images",
+                queryset=ProductImage.objects.select_related("color").order_by("sort_order"),
+            ),
+            "categories",
+            "available_colors",
+            "available_sizes",
+        )
+    )
 
 
 # Homepage hero banners — WebP derivatives in static/img/banners/.
@@ -136,16 +166,7 @@ def _category_image_map():
 
 
 def home(request):
-    products = list(
-        Product.objects.filter(is_active=True)
-        .prefetch_related(
-            Prefetch("images", queryset=ProductImage.objects.select_related("color").order_by("sort_order")),
-            "categories",
-            "available_colors",
-            "available_sizes",
-        )
-        .distinct()
-    )
+    products = list(_card_product_qs().distinct())
 
     slides = hero_slides()
 
@@ -171,19 +192,7 @@ def home(request):
 
 
 def shop(request):
-    qs = (
-        Product.objects.filter(is_active=True)
-        .prefetch_related(
-            Prefetch(
-                "images",
-                queryset=ProductImage.objects.select_related("color").order_by("sort_order"),
-            ),
-            "categories",
-            "available_colors",
-            "available_sizes",
-        )
-        .distinct()
-    )
+    qs = _card_product_qs().distinct()
     category_slug = request.GET.get("category")
     q = request.GET.get("q", "").strip()
     color = request.GET.get("color")
@@ -231,16 +240,7 @@ def shop(request):
 def category_detail(request, slug):
     category = get_object_or_404(Category, slug=slug, is_active=True)
     qs = (
-        Product.objects.filter(is_active=True, categories=category)
-        .prefetch_related(
-            Prefetch(
-                "images",
-                queryset=ProductImage.objects.select_related("color").order_by("sort_order"),
-            ),
-            "categories",
-            "available_colors",
-            "available_sizes",
-        )
+        _card_product_qs(Product.objects.filter(is_active=True, categories=category))
         .distinct()
         .order_by("-created_at")
     )
@@ -296,9 +296,10 @@ def product_detail(request, slug):
         )
 
     related = (
-        Product.objects.filter(is_active=True, categories__in=product.categories.all())
+        _card_product_qs(
+            Product.objects.filter(is_active=True, categories__in=product.categories.all())
+        )
         .exclude(pk=product.pk)
-        .prefetch_related("images", "available_colors", "available_sizes")
         .distinct()[:8]
     )
     gallery_images = []

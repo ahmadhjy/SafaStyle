@@ -238,6 +238,18 @@ class Product(TimeStampedModel):
         return bool(self.base_sale_price)
 
     @property
+    def is_out_of_stock(self):
+        """True when no active variation has stock left.
+
+        Listing querysets may annotate ``has_stock`` (Exists subquery) so cards
+        don't trigger one query per product.
+        """
+        has_stock = getattr(self, "has_stock", None)
+        if has_stock is not None:
+            return not bool(has_stock)
+        return not self.variations.filter(is_active=True, stock__gt=0).exists()
+
+    @property
     def card_gallery_urls(self):
         """Unique gallery image URLs in display order for product-card scrubbing."""
         urls = []

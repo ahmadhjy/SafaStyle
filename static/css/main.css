@@ -1242,6 +1242,11 @@ body.nav-open .site-header .header-search input {
   pointer-events: none;
 }
 
+.product-media .badge.badge--oos {
+  background: var(--danger);
+  color: #fff;
+}
+
 .badge {
   position: absolute;
   top: 0.75rem;
