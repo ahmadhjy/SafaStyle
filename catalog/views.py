@@ -171,7 +171,11 @@ def home(request):
     slides = hero_slides()
 
     sale_items = [p for p in products if p.has_sale][:4]
-    latest = sorted(products, key=lambda p: p.created_at, reverse=True)[:8]
+    latest = sorted(
+        (p for p in products if not p.has_sale),
+        key=lambda p: p.created_at,
+        reverse=True,
+    )[:8]
 
     home_categories = _home_categories()
 

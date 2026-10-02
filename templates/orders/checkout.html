@@ -94,6 +94,8 @@
         <div class="field full">
           <label for="id_phone">Phone *</label>
           {{ form.phone }}
+          <p class="field-hint" id="phone-hint">Numbers only, with an optional + at the beginning.</p>
+          <p class="field-error" id="phone-error" aria-live="polite">{{ form.phone.errors.0 }}</p>
         </div>
         <div class="field full">
           <label for="id_email">Email address (optional)</label>

@@ -66,6 +66,28 @@ class DuplicateOrderTests(TestCase):
         self.assertEqual(resp.status_code, 302)
         self.assertEqual(Order.objects.count(), 1)
 
+    def test_invalid_phone_creates_no_order_and_preserves_stock(self):
+        self._add_to_cart()
+        token = self._get_token()
+        for phone in ("client@example.com", "+", "70abc123", "70+123", "++96170123456", "70 123456"):
+            with self.subTest(phone=phone):
+                payload = self._valid_payload(self._get_token())
+                payload["phone"] = phone
+                response = self.client.post(self.checkout_url, payload)
+                self.assertEqual(response.status_code, 200)
+                self.assertIn("phone", response.context["form"].errors)
+                self.assertEqual(Order.objects.count(), 0)
+                self.variation.refresh_from_db()
+                self.assertEqual(self.variation.stock, 10)
+
+    def test_international_phone_accepted(self):
+        self._add_to_cart()
+        payload = self._valid_payload(self._get_token())
+        payload["phone"] = "+96170123456"
+        response = self.client.post(self.checkout_url, payload)
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(Order.objects.get().phone, "+96170123456")
+
     def test_duplicate_submit_with_same_token_does_not_create_second_order(self):
         """The classic 'client thought it failed and resubmitted' scenario."""
         self._add_to_cart()

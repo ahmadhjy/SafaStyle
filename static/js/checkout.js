@@ -4,6 +4,18 @@
   const form = document.getElementById("checkout-form");
   if (!form) return;
 
+  const phoneEl = document.getElementById("id_phone");
+  const phoneError = document.getElementById("phone-error");
+  const validatePhone = () => {
+    const valid = /^\+?[0-9]+$/.test(phoneEl.value.trim());
+    const message = valid ? "" : "Enter a phone number using numbers only, with an optional + at the beginning.";
+    phoneEl.setCustomValidity(message);
+    phoneEl.setAttribute("aria-invalid", String(!valid));
+    if (phoneError) phoneError.textContent = message;
+    return valid;
+  };
+  phoneEl?.addEventListener("input", validatePhone);
+
   const countryEl = document.getElementById("id_country");
   const govField = document.getElementById("governorate-field");
   const govEl = document.getElementById("id_governorate");
@@ -324,6 +336,12 @@
   const placeBtn = form.querySelector("[data-place-order]");
   let submitting = false;
   form.addEventListener("submit", (e) => {
+    if (phoneEl && !validatePhone()) {
+      e.preventDefault();
+      phoneEl.focus();
+      phoneEl.reportValidity();
+      return;
+    }
     // Re-enable disabled governorate so its value is included in the POST.
     if (govEl && govEl.disabled) {
       govEl.disabled = false;

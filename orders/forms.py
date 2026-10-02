@@ -1,3 +1,5 @@
+import re
+
 from django import forms
 
 from .countries import COUNTRY_CHOICES
@@ -57,7 +59,13 @@ class CheckoutForm(forms.ModelForm):
                 }
             ),
             "postcode": forms.TextInput(attrs={"placeholder": "Postcode / ZIP (optional)"}),
-            "phone": forms.TextInput(attrs={"placeholder": "Phone", "required": True}),
+            "phone": forms.TextInput(attrs={
+                "type": "tel", "inputmode": "tel", "autocomplete": "tel",
+                "placeholder": "+96170123456", "required": True,
+                "pattern": r"\+?[0-9]+",
+                "title": "Use numbers only, with an optional + at the beginning.",
+                "aria-describedby": "phone-hint phone-error",
+            }),
             "email": forms.EmailInput(attrs={"placeholder": "Email address (optional)"}),
             "order_notes": forms.Textarea(
                 attrs={
@@ -103,6 +111,14 @@ class CheckoutForm(forms.ModelForm):
             field.widget.attrs.setdefault("class", "field-input")
             if field.required:
                 field.widget.attrs["required"] = True
+
+    def clean_phone(self):
+        phone = self.cleaned_data["phone"]
+        if not re.fullmatch(r"\+?[0-9]+", phone):
+            raise forms.ValidationError(
+                "Enter a phone number using numbers only, with an optional + at the beginning."
+            )
+        return phone
 
     def clean(self):
         cleaned = super().clean()
