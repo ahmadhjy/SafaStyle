@@ -42,7 +42,7 @@ def site_globals(request):
             is_active=True, parent__isnull=True, products__is_active=True
         )
         .distinct()
-        .order_by("sort_order", "name")[:16],
+        .order_by("sort_order", "name"),
         "cart_count": cart_count,
         "cart_total": cart_total,
         "cart_preview": cart_preview,
