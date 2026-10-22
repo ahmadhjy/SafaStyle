@@ -1,5 +1,7 @@
 from django.test import TestCase
 from unittest.mock import patch
+from datetime import timedelta
+from django.utils import timezone
 
 from catalog.models import Product, ProductVariation
 
@@ -7,6 +9,9 @@ class HomepageSectionsTests(TestCase):
     @patch("catalog.views.feature_editorial_boxes", return_value=[])
     def test_new_arrivals_excludes_all_sale_products_before_limit(self, editorial):
         regular = [Product.objects.create(name=f"Regular {i}", base_price=20) for i in range(10)]
+        # Use distinct timestamps: fast inserts can share the same clock tick on Windows.
+        for i, product in enumerate(regular):
+            Product.objects.filter(pk=product.pk).update(created_at=timezone.now() - timedelta(days=10-i))
         for i in range(6):
             Product.objects.create(name=f"Sale {i}", base_price=20, base_sale_price=15)
         variable = Product.objects.create(name="Variable sale", base_price=20)

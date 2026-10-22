@@ -6,6 +6,7 @@
 {% block og_title %}{{ site.store_name }} — {{ site.tagline }}{% endblock %}
 
 {% block extra_head %}
+<link rel="stylesheet" href="{% static 'css/campaign.css' %}?v={{ static_version }}">
 {% if slides %}
 <link rel="preload" as="image" href="{% static slides.0.image_mobile %}" type="image/webp" media="(max-width: 700px)" fetchpriority="high">
 <link rel="preload" as="image" href="{% static slides.0.image_desktop %}" type="image/webp" media="(min-width: 701px)" fetchpriority="high">
@@ -13,7 +14,7 @@
 {% endblock %}
 
 {% block content %}
-<section class="hero" data-slider aria-roledescription="carousel" aria-label="Featured">
+<section class="hero hero--campaign" data-slider aria-roledescription="carousel" aria-label="Featured">
   <div class="hero-stage">
     <div class="hero-track">
     {% for slide in slides %}
@@ -30,31 +31,27 @@
                {% if forloop.first %}loading="eager" fetchpriority="high"{% else %}loading="lazy"{% endif %}
                style="--hero-pos: {{ slide.object_position|default:'center center' }}">
         </picture>
-        <div class="hero-scrim" aria-hidden="true"></div>
-        <div class="hero-content">
-          <p class="eyebrow eyebrow--light">{{ slide.eyebrow }}</p>
-          {% if forloop.first %}
-          <h1 class="hero-brand">
-            <span class="hs-line">Modest.</span>
-            <span class="hs-line">Modern.</span>
-            <span class="hs-line gold">Made for you.</span>
-          </h1>
-          {% else %}
-          <p class="hero-brand">
-            <span class="hs-line">Modest.</span>
-            <span class="hs-line">Modern.</span>
-            <span class="hs-line gold">Made for you.</span>
-          </p>
-          {% endif %}
-          <p class="hero-lead">Quality fabrics, tailored cuts, and statement modest looks — new arrivals every week.</p>
-          <div class="hero-actions">
-            <a class="btn btn-gold" href="{% url 'catalog:shop' %}">
-              <span>Shop the collection</span>
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
-            </a>
-            <a class="btn btn-glass" href="{% url 'pages:contact' %}">Contact us</a>
+        {% if forloop.first %}
+        <div class="campaign-copy">
+          <h1 class="campaign-title">Redefining <span class="campaign-modern">modern</span> femininity</h1>
+          <p class="campaign-highlight">Designed to inspire</p>
+          <p class="campaign-explore">Explore collection</p>
+          <ul class="campaign-values" aria-label="Our inspiration">
+            <li><svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.3" aria-hidden="true"><path d="M21 3h6l1 7 6 5-5 9 11 18H8l11-18-5-9 6-5Z"/><path d="M19 24h10M24 42v4"/></svg><span>Custom designs</span></li>
+            <li><svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.3" aria-hidden="true"><circle cx="12" cy="36" r="7"/><circle cx="36" cy="36" r="7"/><path d="m17 31 23-27 1 5-20 24M31 31 8 4 7 9l20 24"/><circle cx="24" cy="24" r="2"/></svg><span>Quality craftsmanship</span></li>
+            <li><svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.3" aria-hidden="true"><path d="M10 35C-1 14 26 12 41 3c1 27-12 38-28 28M7 45c4-16 13-23 25-31M14 29l13-1M20 22l1-9"/></svg><span>Sustainable fashion</span></li>
+            <li><svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.3" aria-hidden="true"><path d="M24 42 6 24C-7 9 12-3 24 12 36-3 55 9 42 24Z"/></svg><span>Made with passion</span></li>
+          </ul>
+          <div class="campaign-actions">
+            <a class="campaign-shop" href="{% url 'catalog:shop' %}">Shop now</a>
+            <a class="campaign-contact" href="{% url 'pages:contact' %}">Contact us</a>
           </div>
         </div>
+        {% else %}
+        <a class="campaign-image-link" href="{% url 'catalog:shop' %}{% if forloop.counter == 2 %}?category=sets{% endif %}" aria-label="{% if forloop.counter == 2 %}Shop Sets{% else %}Shop the Safa Style collection{% endif %}">
+          <span class="campaign-image-cta">{% if forloop.counter == 2 %}Shop Sets{% else %}Shop the collection{% endif %} <span aria-hidden="true">↗</span></span>
+        </a>
+        {% endif %}
       </div>
     {% empty %}
       <div class="hero-slide is-active" data-slide>
@@ -85,6 +82,7 @@
         <button class="hero-dot {% if forloop.first %}is-active{% endif %}" data-slide-dot="{{ forloop.counter0 }}" aria-label="Slide {{ forloop.counter }}"></button>
       {% endfor %}
     </div>
+    <button class="campaign-pause" data-slide-pause aria-label="Pause slideshow">Pause</button>
     {% endif %}
   </div>
 

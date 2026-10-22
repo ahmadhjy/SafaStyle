@@ -5,27 +5,47 @@
   const dots = [...slider.querySelectorAll("[data-slide-dot]")];
   const prev = slider.querySelector("[data-slide-prev]");
   const next = slider.querySelector("[data-slide-next]");
+  const pause = slider.querySelector("[data-slide-pause]");
   if (slides.length < 2) return;
 
   const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   let index = 0;
   let timer = null;
-  const DELAY = 5500;
+  let paused = reduced;
+  const DELAY = 7500;
 
   function go(i) {
     index = (i + slides.length) % slides.length;
-    slides.forEach((s, n) => s.classList.toggle("is-active", n === index));
+    slides.forEach((s, n) => {
+      s.classList.toggle("is-active", n === index);
+      s.inert = n !== index;
+      s.setAttribute("aria-hidden", String(n !== index));
+    });
     dots.forEach((d, n) => d.classList.toggle("is-active", n === index));
   }
 
   function start() {
-    if (reduced) return;
+    if (paused || document.hidden || (slider.contains(document.activeElement) && document.activeElement !== pause)) return;
     stop();
     timer = setInterval(() => go(index + 1), DELAY);
   }
   function stop() {
     if (timer) clearInterval(timer);
   }
+
+  function syncPause() {
+    if (!pause) return;
+    pause.textContent = paused ? "Play" : "Pause";
+    pause.setAttribute("aria-label", paused ? "Play slideshow" : "Pause slideshow");
+  }
+  pause?.addEventListener("click", () => {
+    paused = !paused;
+    syncPause();
+    if (paused) stop(); else start();
+  });
+  slider.addEventListener("focusin", stop);
+  slider.addEventListener("focusout", () => setTimeout(start, 0));
+  document.addEventListener("visibilitychange", () => document.hidden ? stop() : start());
 
   next && next.addEventListener("click", () => { go(index + 1); start(); });
   prev && prev.addEventListener("click", () => { go(index - 1); start(); });
@@ -48,5 +68,6 @@
   });
 
   go(0);
+  syncPause();
   start();
 })();
