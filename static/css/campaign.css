@@ -45,8 +45,7 @@
 .campaign-contact { font: 400 max(12px, .85cqw) / 1.4 var(--font-body); text-decoration: underline; text-underline-offset: 4px; }
 .campaign-image-link { position: absolute; inset: 0; display: block; }
 .campaign-image-cta {
-  position: absolute; bottom: 9%; left: 6%; background: #050505; color: #e8d477;
-  padding: .8em 1.3em; font-size: clamp(13px, 1.1vw, 19px); text-transform: uppercase; letter-spacing: .08em;
+  position: absolute; bottom: 9%; left: 6.4%;
 }
 .hero--campaign a:focus-visible, .hero--campaign button:focus-visible { outline: 3px solid #ad7020; outline-offset: 4px; }
 .hero--campaign .hero-arrow { width: 32px; height: 32px; background: #0009; color: white; }
@@ -69,6 +68,6 @@
   .campaign-actions { top: 78%; left: 8%; flex-direction: column; align-items: flex-start; gap: 2cqw; }
   .campaign-shop { font-size: 5.2cqw; padding: .6em .8em; }
   .campaign-contact { font-size: 13px; }
-  .campaign-image-cta { bottom: 8%; left: 7%; font-size: 13px; }
+  .campaign-image-cta { bottom: 8%; left: 8%; }
   .hero--campaign .hero-arrow, .hero--campaign .hero-dots { display: none; }
 }

@@ -49,7 +49,7 @@
         </div>
         {% else %}
         <a class="campaign-image-link" href="{% url 'catalog:shop' %}{% if forloop.counter == 2 %}?category=sets{% endif %}" aria-label="{% if forloop.counter == 2 %}Shop Sets{% else %}Shop the Safa Style collection{% endif %}">
-          <span class="campaign-image-cta">{% if forloop.counter == 2 %}Shop Sets{% else %}Shop the collection{% endif %} <span aria-hidden="true">↗</span></span>
+          <span class="campaign-shop campaign-image-cta">Shop now</span>
         </a>
         {% endif %}
       </div>
