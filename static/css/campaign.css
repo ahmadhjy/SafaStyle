@@ -59,16 +59,16 @@
 .page-home .feature-card:hover .feature-media img { filter: none; }
 @media (max-width: 700px) {
   .hero--campaign .hero-stage { aspect-ratio: 3 / 4; height: auto; }
-  .campaign-title { top: 8%; left: 10%; width: 82%; font-size: 5.65cqw; line-height: 1.6; letter-spacing: -.035em; }
+  .campaign-title { top: 7%; left: 8%; width: 86%; font-size: 7.1cqw; line-height: 1.2; letter-spacing: -.035em; }
   .campaign-modern::before { display: none; }
-  .campaign-highlight { top: 23%; left: 10%; font-size: 3.7cqw; }
-  .campaign-explore { top: 50%; left: 10%; width: 45%; font-size: 5.65cqw; line-height: 1.4; }
-  .campaign-values { top: 62%; left: 10%; width: 36%; gap: 1.2cqw; }
-  .campaign-values svg { width: 5cqw; height: 5cqw; margin-bottom: .8cqw; }
-  .campaign-values span { font-size: .8cqw; }
-  .campaign-actions { top: 71%; left: 10%; flex-direction: column; align-items: flex-start; gap: 2cqw; }
-  .campaign-shop { font-size: 4.7cqw; padding: .6em .8em; }
-  .campaign-contact { font-size: 12px; }
+  .campaign-highlight { top: 23%; left: 8%; font-size: 4.5cqw; }
+  .campaign-explore { top: 35%; left: 8%; width: 50%; font-size: 7cqw; line-height: 1.15; }
+  .campaign-values { top: 51%; left: 8%; width: 45%; display: grid; grid-template-columns: 1fr 1fr; gap: 3cqw 2cqw; }
+  .campaign-values svg { width: 6cqw; height: 6cqw; margin-bottom: 1cqw; }
+  .campaign-values span { font: 400 max(9px, 2.35cqw) / 1.2 var(--font-body); white-space: normal; text-shadow: 0 1px 3px #fff, 0 0 6px #fff; }
+  .campaign-actions { top: 78%; left: 8%; flex-direction: column; align-items: flex-start; gap: 2cqw; }
+  .campaign-shop { font-size: 5.2cqw; padding: .6em .8em; }
+  .campaign-contact { font-size: 13px; }
   .campaign-image-cta { bottom: 8%; left: 7%; font-size: 13px; }
   .hero--campaign .hero-arrow, .hero--campaign .hero-dots { display: none; }
 }
