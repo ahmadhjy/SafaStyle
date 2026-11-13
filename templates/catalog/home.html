@@ -134,26 +134,6 @@
 </section>
 {% endif %}
 
-{% if sale_items %}
-<section class="section" style="padding-top:0">
-  <div class="container">
-    <div class="section-head reveal">
-      <div>
-        <p class="eyebrow eyebrow--magenta">Limited</p>
-        <h2>On sale now</h2>
-        <p>Selected pieces at special prices.</p>
-      </div>
-      <a class="btn btn-ghost" href="{% url 'catalog:shop' %}?sale=1">View all</a>
-    </div>
-    <div class="product-grid">
-      {% for product in sale_items %}
-        {% include "catalog/partials/product_card.html" %}
-      {% endfor %}
-    </div>
-  </div>
-</section>
-{% endif %}
-
 <section class="section" style="padding-top:0">
   <div class="container">
     <div class="section-head reveal">
@@ -177,6 +157,26 @@
     </div>
   </div>
 </section>
+
+{% if sale_items %}
+<section class="section" style="padding-top:0">
+  <div class="container">
+    <div class="section-head reveal">
+      <div>
+        <p class="eyebrow eyebrow--magenta">Limited</p>
+        <h2>On sale now</h2>
+        <p>Selected pieces at special prices.</p>
+      </div>
+      <a class="btn btn-ghost" href="{% url 'catalog:shop' %}?sale=1">View all</a>
+    </div>
+    <div class="product-grid">
+      {% for product in sale_items %}
+        {% include "catalog/partials/product_card.html" %}
+      {% endfor %}
+    </div>
+  </div>
+</section>
+{% endif %}
 
 {% if home_categories %}
 <section class="section" style="padding-top:0">
